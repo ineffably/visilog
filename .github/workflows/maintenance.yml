@@ -1,0 +1,104 @@
+name: Maintenance
+
+on:
+  schedule:
+    # Run weekly on Sundays at 2 AM UTC
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+
+jobs:
+  dependency-update:
+    name: Update Dependencies
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        
+    - name: Check for outdated packages
+      run: |
+        echo "Checking for outdated packages..."
+        npm outdated || true
+        
+    - name: Update patch and minor versions
+      run: |
+        echo "Updating patch and minor versions..."
+        npm update
+        
+    - name: Run tests after update
+      run: |
+        npm ci
+        npm test
+        npm run build
+        
+    - name: Create PR for dependency updates
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: 'chore: update dependencies'
+        title: '🔄 Automated dependency updates'
+        body: |
+          ## 🔄 Automated Dependency Updates
+          
+          This PR contains automated dependency updates:
+          
+          - ✅ Patch and minor version updates applied
+          - ✅ Tests passing
+          - ✅ Build successful
+          
+          ### Changes
+          - Updated package-lock.json with latest compatible versions
+          - All tests continue to pass
+          - Build artifacts validated
+          
+          This PR was automatically created by the maintenance workflow.
+        branch: chore/dependency-updates
+        delete-branch: true
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run security audit
+      run: |
+        echo "Running npm security audit..."
+        npm audit --audit-level=moderate
+        
+    - name: Check for known vulnerabilities
+      run: |
+        echo "Checking for known vulnerabilities..."
+        npx audit-ci --moderate
+        
+  cleanup:
+    name: Cleanup Old Artifacts
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Delete old workflow runs
+      uses: Mattraks/delete-workflow-runs@v2
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        repository: ${{ github.repository }}
+        retain_days: 30
+        keep_minimum_runs: 10 

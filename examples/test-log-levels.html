@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log Levels Test</title>
+</head>
+<body>
+    <h1>WebSocket Logger - Log Levels Test</h1>
+    <p>Open your browser console and check the log files to see how different log levels are captured.</p>
+    
+    <button onclick="testLogLevels()">Test All Log Levels</button>
+    <button onclick="testInfoVsLog()">Test INFO vs LOG</button>
+    
+    <script type="module">
+        import { WebSocketLogger } from '../client/websocket-logger.js';
+        
+        // Initialize logger
+        const logger = new WebSocketLogger({
+            websocketUrl: 'ws://localhost:3001',
+            namespace: 'test-levels'
+        });
+        
+        // Enable console override to capture all console calls
+        logger.enableConsoleOverride();
+        
+        // Make functions available globally
+        window.testLogLevels = function() {
+            console.debug('🔍 This is a DEBUG message', { level: 'debug', priority: 0 });
+            console.log('📝 This is a LOG message', { level: 'log', priority: 1 });
+            console.info('ℹ️ This is an INFO message', { level: 'info', priority: 2 });
+            console.warn('⚠️ This is a WARN message', { level: 'warn', priority: 3 });
+            console.error('❌ This is an ERROR message', { level: 'error', priority: 4 });
+        };
+        
+        window.testInfoVsLog = function() {
+            console.log('📝 Regular log message - used for general output');
+            console.info('ℹ️ Info message - used for informational content');
+            console.log('📝 Another log message with data', { userId: 123, action: 'click' });
+            console.info('ℹ️ Another info message with data', { status: 'success', timestamp: new Date() });
+        };
+        
+        // Log that the test page is ready
+        console.info('🚀 Log levels test page loaded and ready');
+    </script>
+</body>
+</html> 
