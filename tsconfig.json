@@ -33,6 +33,7 @@
     "client/**/*",
     "server/**/*",
     "plugins/**/*",
+    "library/**/*",
     "tests/**/*"
   ],
   "exclude": [

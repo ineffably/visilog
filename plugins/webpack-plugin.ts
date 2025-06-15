@@ -84,7 +84,7 @@ export class WebSocketLoggerWebpackPlugin implements WebpackPluginInstance {
         if (HtmlWebpackPlugin) {
           HtmlWebpackPlugin.getHooks(compilation).beforeEmit.tapAsync(
             pluginName,
-            (data, callback) => {
+            (data: any, callback: any) => {
               data.html = this.injectClientScript(data.html);
               callback(null, data);
             }
@@ -94,7 +94,7 @@ export class WebSocketLoggerWebpackPlugin implements WebpackPluginInstance {
 
       // Add virtual module resolution
       compiler.hooks.normalModuleFactory.tap(pluginName, (nmf) => {
-        nmf.hooks.resolve.tapAsync(pluginName, (result, callback) => {
+        nmf.hooks.resolve.tapAsync(pluginName, (result: any, callback: any) => {
           if (result.request === '@websocket-logger/client') {
             result.request = this.getClientModulePath();
           }
@@ -114,9 +114,9 @@ export class WebSocketLoggerWebpackPlugin implements WebpackPluginInstance {
         }
         
         if (Array.isArray(devServer.setupMiddlewares)) {
-          devServer.setupMiddlewares.push((middlewares, devServer) => {
+          devServer.setupMiddlewares.push((middlewares: any, devServer: any) => {
             // Add route for client script
-            devServer.app?.get('/__websocket-logger-client.js', (req, res) => {
+            devServer.app?.get('/__websocket-logger-client.js', (req: any, res: any) => {
               res.setHeader('Content-Type', 'application/javascript');
               res.send(this.generateClientScript());
             });
