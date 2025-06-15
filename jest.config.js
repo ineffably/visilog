@@ -21,7 +21,8 @@ module.exports = {
   coverageReporters: [
     'text',
     'lcov',
-    'html'
+    'html',
+    'json-summary'
   ],
   coverageThreshold: {
     global: {
