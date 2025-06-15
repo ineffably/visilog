@@ -2,7 +2,8 @@
   "name": "visilog",
   "version": "0.7.0",
   "description": "This allows LLMs to easily read your browser console logs by streaming them to your file system when using Vite or Webpack. No MCP required, tell your LLM to read the logs as it would browser logs.",
-  "main": "dist/index.js",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
@@ -99,25 +100,31 @@
   "engines": {
     "node": ">=16.0.0"
   },
+  "type": "module",
   "exports": {
     ".": {
-      "require": "./dist/index.js",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
       "types": "./dist/index.d.ts"
     },
     "./client": {
-      "require": "./dist/client/websocket-logger.js",
+      "import": "./dist/client/websocket-logger.js",
+      "require": "./dist/client/websocket-logger.cjs",
       "types": "./dist/client/websocket-logger.d.ts"
     },
     "./server": {
-      "require": "./dist/server/websocket-logger-server.js",
+      "import": "./dist/server/websocket-logger-server.js",
+      "require": "./dist/server/websocket-logger-server.cjs",
       "types": "./dist/server/websocket-logger-server.d.ts"
     },
     "./vite": {
-      "require": "./dist/plugins/vite-plugin.js",
+      "import": "./dist/plugins/vite-plugin.js",
+      "require": "./dist/plugins/vite-plugin.cjs",
       "types": "./dist/plugins/vite-plugin.d.ts"
     },
     "./webpack": {
-      "require": "./dist/plugins/webpack-plugin.js",
+      "import": "./dist/plugins/webpack-plugin.js",
+      "require": "./dist/plugins/webpack-plugin.cjs",
       "types": "./dist/plugins/webpack-plugin.d.ts"
     }
   }

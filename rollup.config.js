@@ -1,30 +1,64 @@
-const resolve = require('@rollup/plugin-node-resolve');
-const commonjs = require('@rollup/plugin-commonjs');
-const typescript = require('@rollup/plugin-typescript');
-const { default: dts } = require('rollup-plugin-dts');
+import resolve from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
+import typescript from '@rollup/plugin-typescript';
+import dts from 'rollup-plugin-dts';
 
 const external = ['ws', 'fs', 'path', 'http', 'url', 'events'];
 
-const createConfig = (input, outputDir, name) => ({
+// Base TypeScript config for both builds
+const baseTypeScriptConfig = {
+  tsconfig: './tsconfig.json',
+  declaration: false,
+  declarationMap: false,
+  noEmitOnError: false
+};
+
+// Create ES module config
+const createESMConfig = (input, outputDir, name) => ({
   input,
   external,
   plugins: [
     resolve({ preferBuiltins: true }),
     commonjs(),
     typescript({
-      tsconfig: './tsconfig.json',
-      declaration: false,
-      declarationMap: false,
+      ...baseTypeScriptConfig,
       compilerOptions: {
-        module: 'ESNext'
+        module: 'ESNext',
+        target: 'ES2020',
+        moduleResolution: 'node'
       }
     })
   ],
   output: {
     file: `dist/${outputDir}/${name}.js`,
+    format: 'es',
+    sourcemap: true,
+    exports: 'named'
+  }
+});
+
+// Create CommonJS config  
+const createCJSConfig = (input, outputDir, name) => ({
+  input,
+  external,
+  plugins: [
+    resolve({ preferBuiltins: true }),
+    commonjs(),
+    typescript({
+      ...baseTypeScriptConfig,
+      // Use ESNext for Rollup, then let the output format handle the conversion
+      compilerOptions: {
+        module: 'ESNext',
+        target: 'ES2020',
+        moduleResolution: 'node'
+      }
+    })
+  ],
+  output: {
+    file: `dist/${outputDir}/${name}.cjs`,
     format: 'cjs',
     sourcemap: true,
-    exports: 'auto'
+    exports: 'named'
   }
 });
 
@@ -38,24 +72,21 @@ const createDtsConfig = (input, outputFile) => ({
   }
 });
 
-module.exports = [
-  // Main entry point
-  createConfig('index.ts', '.', 'index'),
+const entries = [
+  { input: 'index.ts', outputDir: '.', name: 'index' },
+  { input: 'client/websocket-logger.ts', outputDir: 'client', name: 'websocket-logger' },
+  { input: 'server/websocket-logger-server.ts', outputDir: 'server', name: 'websocket-logger-server' },
+  { input: 'plugins/vite-plugin.ts', outputDir: 'plugins', name: 'vite-plugin' },
+  { input: 'plugins/webpack-plugin.ts', outputDir: 'plugins', name: 'webpack-plugin' }
+];
+
+export default [
+  // ES Module builds
+  ...entries.map(entry => createESMConfig(entry.input, entry.outputDir, entry.name)),
   
-  // Client
-  createConfig('client/websocket-logger.ts', 'client', 'websocket-logger'),
-  
-  // Server
-  createConfig('server/websocket-logger-server.ts', 'server', 'websocket-logger-server'),
-  
-  // Plugins
-  createConfig('plugins/vite-plugin.ts', 'plugins', 'vite-plugin'),
-  createConfig('plugins/webpack-plugin.ts', 'plugins', 'webpack-plugin'),
+  // CommonJS builds
+  ...entries.map(entry => createCJSConfig(entry.input, entry.outputDir, entry.name)),
   
   // Type declarations
-  createDtsConfig('index.ts', 'dist/index.d.ts'),
-  createDtsConfig('client/websocket-logger.ts', 'dist/client/websocket-logger.d.ts'),
-  createDtsConfig('server/websocket-logger-server.ts', 'dist/server/websocket-logger-server.d.ts'),
-  createDtsConfig('plugins/vite-plugin.ts', 'dist/plugins/vite-plugin.d.ts'),
-  createDtsConfig('plugins/webpack-plugin.ts', 'dist/plugins/webpack-plugin.d.ts')
+  ...entries.map(entry => createDtsConfig(entry.input, `dist/${entry.outputDir}/${entry.name}.d.ts`))
 ]; 

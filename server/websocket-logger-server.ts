@@ -12,7 +12,8 @@ import type {
   SessionIndexEntry,
   SessionHandler,
   LogHandler,
-  ErrorHandler 
+  ErrorHandler, 
+  ErrorContext
 } from '../types';
 
 interface Session extends SessionInfo {
@@ -509,7 +510,12 @@ export class WebSocketLoggerServer {
     
     this.errorHandlers.forEach(handler => {
       try {
-        handler(error, context);
+        const errorContext = context ? {
+          operation: context,
+          component: 'WebSocketLoggerServer',
+          timestamp: new Date().toISOString()
+        } : undefined;
+        handler(error, errorContext);
       } catch (handlerError) {
         console.error('❌ Error handler failed:', handlerError);
       }

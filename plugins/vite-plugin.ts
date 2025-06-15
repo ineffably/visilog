@@ -101,6 +101,7 @@ export function createVitePlugin(config: PluginConfig = {}): ViteWebSocketLogger
       if (id === '/@websocket-logger/client') {
         return id;
       }
+      return null;
     },
 
     load(id) {
@@ -112,6 +113,7 @@ export { WebSocketLogger };
 export default WebSocketLogger;
 `;
       }
+      return null;
     },
 
     handleHotUpdate(ctx) {
@@ -119,6 +121,7 @@ export default WebSocketLogger;
       if (ctx.file.includes('websocket-logger')) {
         return [];
       }
+      return undefined;
     },
 
     buildStart() {

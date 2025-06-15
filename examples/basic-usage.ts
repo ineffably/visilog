@@ -4,7 +4,7 @@
 // Server Setup (Node.js)
 // ========================================
 import { WebSocketLoggerServer } from '../server/websocket-logger-server'
-import type { SessionInfo, LogMessage } from '../types'
+import type { SessionInfo, LogMessage, ErrorContext } from '../types'
 
 async function startLoggingServer() {
   const server = new WebSocketLoggerServer({
@@ -32,7 +32,7 @@ async function startLoggingServer() {
   })
 
   // Listen for errors
-  server.onError((error: Error, context?: string) => {
+  server.onError((error: Error, context?: ErrorContext) => {
     console.error(`❌ Server error in ${context}:`, error)
   })
 
@@ -75,7 +75,7 @@ function setupClientLogger() {
   })
 
   // Listen for connection errors
-  logger.onError((error: Error, context?: string) => {
+  logger.onError((error: Error, context?: ErrorContext) => {
     console.warn(`Logger error in ${context}:`, error)
   })
 

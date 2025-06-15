@@ -319,7 +319,12 @@ export class WebSocketLogger {
     
     this.errorHandlers.forEach(handler => {
       try {
-        handler(error, context);
+        const errorContext = context ? {
+          operation: context,
+          component: 'WebSocketLogger',
+          timestamp: new Date().toISOString()
+        } : undefined;
+        handler(error, errorContext);
       } catch (handlerError) {
         this.originalConsole.error('❌ Error handler failed:', handlerError);
       }
