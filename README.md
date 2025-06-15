@@ -18,17 +18,24 @@
 
 ## Why This Tool?
 
-When working with LLMs on web development, you constantly need to share browser console logs for debugging help. Instead of copying and pasting console output, Visilog automatically streams all your browser logs to files that your LLM can read directly. No complex setup, no MCP protocol - just simple file-based logging that works with any LLM.
+When working with **LLMs and AI assistants** on web development, you constantly need to share **browser console logs** for debugging help. Instead of copying and pasting console output, Visilog automatically **streams all your browser logs to files** that your LLM can read directly. 
+
+**Perfect for:**
+- 🤖 **AI-assisted debugging** - Let your LLM see exactly what's happening in the browser
+- 🔍 **Log visibility** - Stream console logs in real-time to your file system  
+- 🚫 **No MCP required** - Simple file-based approach, no complex protocols
+- ⚡ **Developer experience** - Zero-config setup with Vite and Webpack plugins
 
 ## Features
 
-- 🤖 **LLM-ready** - Your LLM can read the log files directly, no copying/pasting needed
-- 📁 **File-based** - Saves all console logs to simple files your LLM can access
-- 🔌 **Plugin support** - Drop-in plugins for Vite and Webpack
-- 📱 **Session tracking** - Separate log files per browser session
-- ⚡ **Zero config** - Add one line to your config, that's it
-- 🚫 **No MCP** - No complex protocols or setup required
-- 🔄 **Real-time** - Logs stream instantly as they happen
+- 🤖 **LLM-ready** - AI assistants can read browser logs directly from files
+- 📁 **File-based logging** - Console streaming to your file system, no databases needed
+- 🔌 **Vite & Webpack plugins** - Drop-in integration for modern development tools
+- 📱 **Session tracking** - Organized browser log files per session with metadata
+- ⚡ **Zero configuration** - One-line setup, works out of the box
+- 🚫 **No MCP protocol** - Simple file approach, no Model Context Protocol complexity
+- 🔄 **Real-time streaming** - WebSocket-based console log streaming
+- 🎯 **Developer experience** - Built for modern TypeScript development workflows
 
 ## Quick Start
 
@@ -505,4 +512,10 @@ MIT License - Perfect for use with any LLM or AI assistant! 🤖
 
 ---
 
-**Stop copying and pasting console output - let your LLM read your browser logs directly from files!** ✨ 
+**Stop copying and pasting console output - let your LLM read your browser logs directly from files!** ✨
+
+---
+
+## 🔍 **Search Terms**
+
+*Looking for: browser log streaming, LLM debugging tools, console log visibility, AI assistant integration, Vite logging plugin, Webpack console streaming, file-based logging, no MCP logging, real-time browser logs, TypeScript logging tools, developer experience tools* 
