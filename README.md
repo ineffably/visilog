@@ -1,20 +1,34 @@
 # Visilog
 
-A visual logging solution for development environments that streams browser console logs via WebSocket to your development tools and LLM assistants.
+<div align="center">
+  <img src="https://img.shields.io/badge/TypeScript-Ready-blue" alt="TypeScript Ready">
+  <img src="https://img.shields.io/badge/License-MIT-green" alt="License">
+  <img src="https://img.shields.io/npm/v/visilog" alt="npm version">
+  <a href="https://github.com/ineffably/visilog/actions/workflows/ci.yml">
+    <img src="https://github.com/ineffably/visilog/actions/workflows/ci.yml/badge.svg" alt="CI Status">
+  </a>
+  <img src="https://raw.githubusercontent.com/ineffably/visilog/main/badges/coverage.svg" alt="Test Coverage">
+  <img src="https://img.shields.io/badge/No%20MCP-Required-brightgreen" alt="No MCP Required">
+</div>
+
+<p align="center">
+  <b>Stream your browser console logs directly to files so your LLM can read them</b><br>
+  <sub>Works with Vite and Webpack. No MCP setup required - just tell your LLM to read the log files like any other browser logs.</sub>
+</p>
 
 ## Why This Tool?
 
-When developing web applications, you need visibility into what's happening in the browser. Visilog provides real-time streaming of browser console logs to your development environment, making debugging easier and enabling seamless integration with LLM assistants for code analysis and troubleshooting.
+When working with LLMs on web development, you constantly need to share browser console logs for debugging help. Instead of copying and pasting console output, Visilog automatically streams all your browser logs to files that your LLM can read directly. No complex setup, no MCP protocol - just simple file-based logging that works with any LLM.
 
 ## Features
 
-- 🔄 **Real-time streaming** - Live WebSocket connection streams console logs instantly
-- 📁 **File-based logging** - Saves logs to easily accessible files for analysis
-- 🤖 **LLM-ready** - Structured JSON format perfect for AI assistant integration
-- 🔌 **Plugin ecosystem** - Seamless integration with Vite and Webpack
-- 📱 **Session management** - Organized logs per browser session with metadata
-- 🧹 **Smart cleanup** - Automatic log rotation and cleanup
-- ⚡ **Zero configuration** - Works out of the box with sensible defaults
+- 🤖 **LLM-ready** - Your LLM can read the log files directly, no copying/pasting needed
+- 📁 **File-based** - Saves all console logs to simple files your LLM can access
+- 🔌 **Plugin support** - Drop-in plugins for Vite and Webpack
+- 📱 **Session tracking** - Separate log files per browser session
+- ⚡ **Zero config** - Add one line to your config, that's it
+- 🚫 **No MCP** - No complex protocols or setup required
+- 🔄 **Real-time** - Logs stream instantly as they happen
 
 ## Quick Start
 
@@ -43,7 +57,15 @@ export default defineConfig({
 })
 ```
 
-That's it! Your browser logs will now be automatically saved to files that you can share with your LLM.
+That's it! Your browser logs are now automatically saved to files. Just tell your LLM to read the `./logs/` folder.
+
+### Tell Your LLM
+
+```
+"Please read the browser console logs in the ./logs/ directory and help me debug this issue"
+```
+
+Your LLM can now see all your browser console output without you copying and pasting anything!
 
 ### Webpack Plugin
 
@@ -84,12 +106,12 @@ import { WebSocketLogger } from 'visilog/client'
 const logger = new WebSocketLogger()
 logger.enableConsoleOverride() // Automatically capture all console.* calls
 
-// Now all your console.log, console.error, etc. will be saved to files!
+// Now all your console.log, console.error, etc. are saved to files your LLM can read!
 ```
 
-## How to Share Logs with Your LLM
+## How Your LLM Reads the Logs
 
-Once the logger is running, your browser logs will be automatically saved to files in the `logs` directory:
+Once the logger is running, all browser logs are automatically saved to the `logs` directory:
 
 ```
 logs/
@@ -120,7 +142,7 @@ The `index.json` file provides a quick overview of all sessions:
 }
 ```
 
-Simply copy the contents of the session log files and paste them into your conversation with your LLM. Each log entry is a complete JSON object containing:
+Just tell your LLM to read these files - no copying and pasting needed! Each log entry is a complete JSON object containing:
 - **timestamp**: ISO timestamp of when the log occurred
 - **level**: Log level (debug, log, info, warn, error)
 - **message**: The actual log message
@@ -329,7 +351,7 @@ try {
 }
 ```
 
-**Every console statement above is automatically captured and saved to structured JSON log files!**
+**Every console statement above is automatically captured and saved to structured JSON log files that your LLM can read!**
 
 ### Working with Multiple Projects
 
@@ -454,13 +476,13 @@ export default defineConfig({
 })
 ```
 
-## Common Use Cases with LLMs
+## Common LLM Prompts
 
-- **Debugging Issues**: Share complete error logs and stack traces with your LLM
-- **Code Review**: Show your LLM what's happening when your code runs
-- **Learning**: Get explanations of console output from complex applications
-- **Optimization**: Share performance logs to get optimization suggestions
-- **Testing**: Capture test output and share with your LLM for analysis
+- **"Read the logs in ./logs/ and help me debug this error"**
+- **"Look at the latest session log and explain what's happening"**
+- **"Check the logs for any performance issues"**
+- **"Analyze the error logs and suggest fixes"**
+- **"Review the console output from my last test run"**
 
 ## Troubleshooting
 
@@ -474,7 +496,7 @@ export default defineConfig({
 - Use `minLevel: 3` to only capture errors
 
 **Need help?**
-- Copy your log files and paste them into your LLM conversation
+- Tell your LLM to read the log files directly from `./logs/`
 - Include your configuration for better assistance
 
 ## License
@@ -483,4 +505,4 @@ MIT License - Perfect for use with any LLM or AI assistant! 🤖
 
 ---
 
-**Stop copying and pasting console output manually - let your browser logs flow directly to files that your LLM can easily read!** ✨ 
+**Stop copying and pasting console output - let your LLM read your browser logs directly from files!** ✨ 

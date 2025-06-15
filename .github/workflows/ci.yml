@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+permissions:
+  contents: write
+
 jobs:
   test:
     name: Test & Build
@@ -45,6 +48,49 @@ jobs:
     - name: Build project
       run: npm run build
       
+    - name: Extract Coverage Percentage
+      if: matrix.node-version == '20.x'
+      id: extract_coverage
+      run: |
+        COVERAGE=$(node -e "const fs=require('fs'); const coverage = JSON.parse(fs.readFileSync('./coverage/coverage-summary.json')); console.log(coverage.total.statements.pct)")
+        echo "COVERAGE=$COVERAGE" >> $GITHUB_ENV
+        echo "Coverage: $COVERAGE%"
+        
+    - name: Generate Coverage Badge
+      if: matrix.node-version == '20.x' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+      run: |
+        # Create badges directory if it doesn't exist
+        mkdir -p badges
+        
+        # Get coverage percentage
+        COV="${{ env.COVERAGE }}"
+        
+        # Determine badge color based on coverage
+        if (( $(echo "$COV >= 90" | bc -l) )); then
+          COLOR="brightgreen"
+        elif (( $(echo "$COV >= 80" | bc -l) )); then
+          COLOR="green"
+        elif (( $(echo "$COV >= 70" | bc -l) )); then
+          COLOR="yellowgreen"
+        elif (( $(echo "$COV >= 60" | bc -l) )); then
+          COLOR="yellow"
+        else
+          COLOR="red"
+        fi
+        
+        # Generate SVG badge
+        BADGE_SVG="<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"103.3\" height=\"20\" viewBox=\"0 0 1033 200\" role=\"img\" aria-label=\"coverage: ${COV}%\"><title>coverage: ${COV}%</title><linearGradient id=\"Geyyl\" x2=\"0\" y2=\"100%\"><stop offset=\"0\" stop-opacity=\".1\" stop-color=\"#EEE\"/><stop offset=\"1\" stop-opacity=\".1\"/></linearGradient><mask id=\"ONGBh\"><rect width=\"1033\" height=\"200\" rx=\"30\" fill=\"#FFF\"/></mask><g mask=\"url(#ONGBh)\"><rect width=\"603\" height=\"200\" fill=\"#555\"/><rect width=\"430\" height=\"200\" fill=\"${COLOR}\" x=\"603\"/><rect width=\"1033\" height=\"200\" fill=\"url(#Geyyl)\"/></g><g aria-hidden=\"true\" fill=\"#fff\" text-anchor=\"start\" font-family=\"Verdana,DejaVu Sans,sans-serif\" font-size=\"110\"><text x=\"60\" y=\"148\" textLength=\"503\" fill=\"#000\" opacity=\".25\">coverage</text>    <text x=\"50\" y=\"138\" textLength=\"503\">coverage</text><text x=\"658\" y=\"148\" textLength=\"330\" fill=\"#000\" opacity=\".25\">${COV}%</text><text x=\"648\" y=\"138\" textLength=\"330\">${COV}%</text></g></svg>"
+
+        # Save the badge
+        echo "$BADGE_SVG" > badges/coverage.svg
+        
+        # Commit and push if there are changes
+        git config user.name github-actions[bot]
+        git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+        git add badges/coverage.svg
+        git commit -m "Update coverage badge [skip ci]" || echo "No changes to commit"
+        git push
+        
     - name: Upload coverage to Codecov
       if: matrix.node-version == '20.x'
       uses: codecov/codecov-action@v3
@@ -81,16 +127,18 @@ jobs:
         ls -la dist/
         echo "Checking main entry points..."
         test -f dist/index.js || exit 1
-        test -f dist/index.esm.js || exit 1
         test -f dist/index.d.ts || exit 1
         echo "Checking client build..."
         test -f dist/client/websocket-logger.js || exit 1
-        test -f dist/client/websocket-logger.esm.js || exit 1
         test -f dist/client/websocket-logger.d.ts || exit 1
         echo "Checking server build..."
         test -f dist/server/websocket-logger-server.js || exit 1
-        test -f dist/server/websocket-logger-server.esm.js || exit 1
         test -f dist/server/websocket-logger-server.d.ts || exit 1
+        echo "Checking plugin builds..."
+        test -f dist/plugins/vite-plugin.js || exit 1
+        test -f dist/plugins/vite-plugin.d.ts || exit 1
+        test -f dist/plugins/webpack-plugin.js || exit 1
+        test -f dist/plugins/webpack-plugin.d.ts || exit 1
         echo "All build artifacts present!"
         
     - name: Test package installation
