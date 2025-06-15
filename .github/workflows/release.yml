@@ -65,11 +65,16 @@ jobs:
       run: |
         echo "Validating all required build artifacts exist..."
         test -f dist/index.js || exit 1
+        test -f dist/index.cjs || exit 1
         test -f dist/index.d.ts || exit 1
         test -f dist/client/websocket-logger.js || exit 1
+        test -f dist/client/websocket-logger.cjs || exit 1
         test -f dist/server/websocket-logger-server.js || exit 1
+        test -f dist/server/websocket-logger-server.cjs || exit 1
         test -f dist/plugins/vite-plugin.js || exit 1
+        test -f dist/plugins/vite-plugin.cjs || exit 1
         test -f dist/plugins/webpack-plugin.js || exit 1
+        test -f dist/plugins/webpack-plugin.cjs || exit 1
         echo "All build artifacts validated!"
         
     - name: Determine version increment
@@ -169,12 +174,12 @@ jobs:
         git push origin "v$NEW_VERSION"
         
     - name: Create GitHub Release
-      uses: actions/create-release@v1
+      uses: softprops/action-gh-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: v${{ env.NEW_VERSION }}
-        release_name: Release v${{ env.NEW_VERSION }}
+        name: Release v${{ env.NEW_VERSION }}
         body: |
           ## Changes in v${{ env.NEW_VERSION }}
           
@@ -183,13 +188,19 @@ jobs:
           ### Build Information
           - Node.js: 20.x
           - Tests: ✅ All passing
-          - Build: ✅ Validated
+          - Build: ✅ Validated (ES Modules + CommonJS)
           - Coverage: Generated
           
           ### Installation
           ```bash
           npm install visilog@${{ env.NEW_VERSION }}
           ```
+          
+          ### Module Support
+          - ✅ ES Modules (`import`)
+          - ✅ CommonJS (`require`)
+          - ✅ TypeScript definitions
+          - ✅ Dual build system
         draft: false
         prerelease: ${{ contains(env.NEW_VERSION, 'alpha') || contains(env.NEW_VERSION, 'beta') || contains(env.NEW_VERSION, 'rc') }}
         
