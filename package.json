@@ -1,6 +1,6 @@
 {
   "name": "visilog",
-  "version": "0.7.1-beta.2",
+  "version": "0.7.0",
   "description": "This allows LLMs to easily read your browser console logs by streaming them to your file system when using Vite or Webpack. No MCP required, tell your LLM to read the logs as it would browser logs.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -93,10 +93,39 @@ jobs:
       if: github.event_name == 'workflow_dispatch'
       run: |
         echo "Incrementing version with: ${{ steps.version.outputs.version_arg }}"
-        npm version ${{ steps.version.outputs.version_arg }} --no-git-tag-version
-        NEW_VERSION=$(node -p "require('./package.json').version")
+        
+        # Try to increment version, if it fails due to existing tag, try again
+        MAX_ATTEMPTS=10
+        ATTEMPT=1
+        
+        while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+          echo "Attempt $ATTEMPT: Incrementing version..."
+          npm version ${{ steps.version.outputs.version_arg }} --no-git-tag-version
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          
+          # Check if this version tag already exists
+          if git ls-remote --tags origin | grep -q "refs/tags/v$NEW_VERSION"; then
+            echo "Version v$NEW_VERSION already exists, trying next increment..."
+            # For prerelease, increment the prerelease number
+            if [[ "$NEW_VERSION" == *"beta"* ]] || [[ "$NEW_VERSION" == *"alpha"* ]] || [[ "$NEW_VERSION" == *"rc"* ]]; then
+              npm version prerelease --no-git-tag-version
+            else
+              npm version patch --no-git-tag-version
+            fi
+            ATTEMPT=$((ATTEMPT + 1))
+          else
+            echo "Found available version: $NEW_VERSION"
+            break
+          fi
+        done
+        
+        if [ $ATTEMPT -gt $MAX_ATTEMPTS ]; then
+          echo "Failed to find available version after $MAX_ATTEMPTS attempts"
+          exit 1
+        fi
+        
         echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
-        echo "New version: $NEW_VERSION"
+        echo "Final version: $NEW_VERSION"
         
     - name: Extract version from tag
       if: startsWith(github.ref, 'refs/tags/v')
@@ -122,6 +151,19 @@ jobs:
         else
           git commit -m "chore: bump version to v$NEW_VERSION"
         fi
+        
+        # Check if tag already exists and handle it
+        if git tag -l "v$NEW_VERSION" | grep -q "v$NEW_VERSION"; then
+          echo "Tag v$NEW_VERSION already exists locally, deleting it"
+          git tag -d "v$NEW_VERSION"
+        fi
+        
+        # Check if tag exists on remote
+        if git ls-remote --tags origin | grep -q "refs/tags/v$NEW_VERSION"; then
+          echo "Tag v$NEW_VERSION already exists on remote, deleting it"
+          git push --delete origin "v$NEW_VERSION" || echo "Failed to delete remote tag, continuing..."
+        fi
+        
         git tag "v$NEW_VERSION"
         git push origin main
         git push origin "v$NEW_VERSION"
