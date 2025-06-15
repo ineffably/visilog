@@ -152,7 +152,20 @@ jobs:
         prerelease: ${{ contains(env.NEW_VERSION, 'alpha') || contains(env.NEW_VERSION, 'beta') || contains(env.NEW_VERSION, 'rc') }}
         
     - name: Publish to npm
-      run: npm publish --access public
+      run: |
+        # Determine npm dist-tag based on version
+        if [[ "$NEW_VERSION" == *"alpha"* ]]; then
+          NPM_TAG="alpha"
+        elif [[ "$NEW_VERSION" == *"beta"* ]]; then
+          NPM_TAG="beta"
+        elif [[ "$NEW_VERSION" == *"rc"* ]]; then
+          NPM_TAG="rc"
+        else
+          NPM_TAG="latest"
+        fi
+        
+        echo "Publishing to npm with tag: $NPM_TAG"
+        npm publish --access public --tag $NPM_TAG
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         
@@ -161,13 +174,24 @@ jobs:
         echo "Waiting for npm registry to update..."
         sleep 30
         
-        # Verify the package was published
-        PUBLISHED_VERSION=$(npm view visilog version)
-        echo "Published version: $PUBLISHED_VERSION"
+        # Determine which tag to check
+        if [[ "$NEW_VERSION" == *"alpha"* ]]; then
+          NPM_TAG="alpha"
+        elif [[ "$NEW_VERSION" == *"beta"* ]]; then
+          NPM_TAG="beta"
+        elif [[ "$NEW_VERSION" == *"rc"* ]]; then
+          NPM_TAG="rc"
+        else
+          NPM_TAG="latest"
+        fi
+        
+        # Verify the package was published with correct tag
+        PUBLISHED_VERSION=$(npm view visilog@$NPM_TAG version)
+        echo "Published version on $NPM_TAG tag: $PUBLISHED_VERSION"
         echo "Expected version: $NEW_VERSION"
         
         if [[ "$PUBLISHED_VERSION" == "$NEW_VERSION" ]]; then
-          echo "✅ Package successfully published to npm!"
+          echo "✅ Package successfully published to npm with tag: $NPM_TAG"
         else
           echo "❌ Version mismatch in npm registry"
           exit 1
