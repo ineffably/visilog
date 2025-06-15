@@ -1,27 +1,27 @@
-# LLM DOM to File Logger
+# Visilog
 
-A simple logging solution that allows your LLM model to see your browser logs without using MCP.
+A visual logging solution for development environments that streams browser console logs via WebSocket to your development tools and LLM assistants.
 
 ## Why This Tool?
 
-When working with LLM models for web development, you often need a way to share browser console logs and errors with your AI assistant. This tool provides a lightweight solution that captures browser logs and saves them to files that can be easily shared with your LLM without the complexity of Model Context Protocol (MCP) setup.
+When developing web applications, you need visibility into what's happening in the browser. Visilog provides real-time streaming of browser console logs to your development environment, making debugging easier and enabling seamless integration with LLM assistants for code analysis and troubleshooting.
 
 ## Features
 
-- 🔄 **Real-time log capture** - Automatically captures all browser console logs
-- 📁 **File-based logging** - Saves logs to easily shareable files
-- 🤖 **LLM-friendly** - No complex protocols, just simple file sharing
-- 🔌 **Plugin support** - Works with Vite and Webpack
-- 📱 **Session tracking** - Separate logs per browser session
-- 🧹 **Auto cleanup** - Manages log files automatically
-- ⚡ **Zero config** - Works out of the box
+- 🔄 **Real-time streaming** - Live WebSocket connection streams console logs instantly
+- 📁 **File-based logging** - Saves logs to easily accessible files for analysis
+- 🤖 **LLM-ready** - Structured JSON format perfect for AI assistant integration
+- 🔌 **Plugin ecosystem** - Seamless integration with Vite and Webpack
+- 📱 **Session management** - Organized logs per browser session with metadata
+- 🧹 **Smart cleanup** - Automatic log rotation and cleanup
+- ⚡ **Zero configuration** - Works out of the box with sensible defaults
 
 ## Quick Start
 
 ### Installation
 
 ```bash
-npm install llm-dom2file-logger
+npm install visilog
 ```
 
 ### Vite Plugin (Recommended)
@@ -29,7 +29,7 @@ npm install llm-dom2file-logger
 ```ts
 // vite.config.ts
 import { defineConfig } from 'vite'
-import { createVitePlugin } from 'llm-dom2file-logger/vite'
+import { createVitePlugin } from 'visilog/vite'
 
 export default defineConfig({
   plugins: [
@@ -49,7 +49,7 @@ That's it! Your browser logs will now be automatically saved to files that you c
 
 ```ts
 // webpack.config.js
-const { createWebpackPlugin } = require('llm-dom2file-logger/webpack')
+const { createWebpackPlugin } = require('visilog/webpack')
 
 module.exports = {
   plugins: [
@@ -68,7 +68,7 @@ If you're not using Vite or Webpack, you can set up the logger manually:
 
 ```ts
 // Server (Node.js) - saves logs to files
-import { WebSocketLoggerServer } from 'llm-dom2file-logger/server'
+import { WebSocketLoggerServer } from 'visilog/server'
 
 const server = new WebSocketLoggerServer({
   logsDir: './logs'  // Your logs will be saved here
@@ -79,7 +79,7 @@ await server.start()
 
 ```ts
 // Client (Browser) - captures console logs
-import { WebSocketLogger } from 'llm-dom2file-logger/client'
+import { WebSocketLogger } from 'visilog/client'
 
 const logger = new WebSocketLogger()
 logger.enableConsoleOverride() // Automatically capture all console.* calls
@@ -183,7 +183,7 @@ Here's a comprehensive example showing how to use the WebSocket logger in a real
 ```ts
 // vite.config.ts - Setup (Zero Configuration)
 import { defineConfig } from 'vite'
-import { createVitePlugin } from 'llm-dom2file-logger/vite'
+import { createVitePlugin } from 'visilog/vite'
 
 export default defineConfig({
   plugins: [
@@ -250,7 +250,7 @@ export function ShoppingApp() {
       currentCartSize: cart.length 
     }) // ✅ Logged to file
 
-    try {
+try {
       const response = await fetch('/api/cart/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -301,7 +301,7 @@ export function ShoppingApp() {
       setCart([])
       return order
       
-    } catch (error) {
+} catch (error) {
       console.error('❌ Checkout failed', { 
         error: error.message,
         cartItems: cart,
@@ -375,7 +375,7 @@ If you need more control, you can use the logger programmatically:
 ### Client API
 
 ```ts
-import { WebSocketLogger } from 'llm-dom2file-logger/client'
+import { WebSocketLogger } from 'visilog/client'
 
 const logger = new WebSocketLogger()
 
@@ -393,7 +393,7 @@ logger.destroy()
 ### Server API
 
 ```ts
-import { WebSocketLoggerServer } from 'llm-dom2file-logger/server'
+import { WebSocketLoggerServer } from 'visilog/server'
 
 const server = new WebSocketLoggerServer({
   logsDir: './logs'
@@ -412,7 +412,7 @@ await server.stop()
 // vite.config.ts
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { createVitePlugin } from 'llm-dom2file-logger/vite'
+import { createVitePlugin } from 'visilog/vite'
 
 export default defineConfig({
   plugins: [
@@ -426,7 +426,7 @@ export default defineConfig({
 
 ```ts
 // next.config.js
-const { createWebpackPlugin } = require('llm-dom2file-logger/webpack')
+const { createWebpackPlugin } = require('visilog/webpack')
 
 module.exports = {
   webpack: (config, { dev }) => {
@@ -444,7 +444,7 @@ module.exports = {
 // vite.config.ts
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import { createVitePlugin } from 'llm-dom2file-logger/vite'
+import { createVitePlugin } from 'visilog/vite'
 
 export default defineConfig({
   plugins: [

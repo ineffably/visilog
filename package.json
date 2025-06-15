@@ -1,7 +1,7 @@
 {
-  "name": "llm-dom2file-logger",
+  "name": "visilog",
   "version": "0.7.1-beta.1",
-  "description": "A simple logging solution for your dev env tools like VITE and Webpack that allows your LLM model to \"see\" your browser logs without using MCP",
+  "description": "A visual logging solution for development environments that streams browser console logs via WebSocket to your development tools and LLM assistants",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -36,26 +36,30 @@
     "deps:update": "npm update"
   },
   "keywords": [
-    "websocket",
     "logging",
+    "websocket",
     "development",
     "vite",
     "webpack",
     "plugin",
     "debug",
     "real-time",
-    "console"
+    "console",
+    "visual",
+    "browser",
+    "llm",
+    "assistant"
   ],
   "author": "Chad Neff <ccneff@gmail.com> (https://github.com/ineffably)",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/websocket-dev-logger.git"
+    "url": "https://github.com/ineffably/visilog.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/websocket-dev-logger/issues"
+    "url": "https://github.com/ineffably/visilog/issues"
   },
-  "homepage": "https://github.com/yourusername/websocket-dev-logger#readme",
+  "homepage": "https://github.com/ineffably/visilog#readme",
   "peerDependencies": {
     "vite": "^4.0.0 || ^5.0.0",
     "webpack": "^5.0.0"
