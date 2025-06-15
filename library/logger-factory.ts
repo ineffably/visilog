@@ -326,7 +326,7 @@ class EnhancedLogger implements LoggerInstance {
 
   public onConnection(handler: ConnectionHandler): () => void {
     // Convert base logger's connection events to our enhanced format
-    return this.baseLogger.onError((error, context) => {
+    return this.baseLogger.onError((error, _context) => {
       // This is a simplified implementation - in reality, we'd need to enhance
       // the base logger to emit proper connection status events
       handler('failed', { lastError: error.message });

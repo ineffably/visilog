@@ -6,8 +6,8 @@
 // Import the enhanced factory and utilities
 const { 
   createLogger, 
-  getGlobalLogger, 
-  waitForLogger, 
+  // getGlobalLogger, 
+  // waitForLogger, 
   registry,
   ConfigValidator,
   EnvironmentDetector 
@@ -133,12 +133,12 @@ async function demonstrateEnhancements() {
   console.log('🌐 Global Registry:');
   
   // Create additional named loggers
-  const serviceLogger = registry.create({ 
+  registry.create({ 
     name: 'user-service', 
     namespace: 'microservices' 
   });
   
-  const analyticsLogger = registry.create({ 
+  registry.create({ 
     name: 'analytics', 
     namespace: 'tracking' 
   });

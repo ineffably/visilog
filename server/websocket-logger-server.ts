@@ -12,8 +12,7 @@ import type {
   SessionIndexEntry,
   SessionHandler,
   LogHandler,
-  ErrorHandler, 
-  ErrorContext
+  ErrorHandler
 } from '../types';
 
 interface Session extends SessionInfo {

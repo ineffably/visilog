@@ -303,7 +303,11 @@ describe('WebSocketLoggerServer', () => {
       const error = new Error('Test error');
       (server as any).handleError(error, 'Test context');
       
-      expect(errorHandler).toHaveBeenCalledWith(error, 'Test context');
+      expect(errorHandler).toHaveBeenCalledWith(error, expect.objectContaining({
+        operation: 'Test context',
+        component: 'WebSocketLoggerServer',
+        timestamp: expect.any(String)
+      }));
     });
 
     it('should unsubscribe handlers', () => {

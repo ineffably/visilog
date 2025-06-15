@@ -2,9 +2,7 @@ import type {
   LoggerConfig, 
   ConfigValidationRule, 
   ValidationError, 
-  ValidationResult,
-  LogLevelPriority,
-  FallbackMode 
+  ValidationResult
 } from '../types';
 
 /**
@@ -339,12 +337,12 @@ export class ConfigValidator {
     errors: ValidationError[];
     warnings: ValidationError[];
   } {
-    const errors: ValidationError[] = [];
-    const warnings: ValidationError[] = [];
+    const _errors: ValidationError[] = [];
+    const _warnings: ValidationError[] = [];
 
     // If WebSocket is disabled, warn about limited functionality
     if (config.enableWebSocket === false && config.enableConsole === false) {
-      errors.push({
+      _errors.push({
         field: 'enableWebSocket',
         message: 'Both WebSocket and console logging are disabled',
         value: config.enableWebSocket,
@@ -354,7 +352,7 @@ export class ConfigValidator {
 
     // Warn about performance implications
     if (config.maxQueueSize && config.maxQueueSize > 5000) {
-      warnings.push({
+      _warnings.push({
         field: 'maxQueueSize',
         message: 'Large queue size may impact memory usage',
         value: config.maxQueueSize,
@@ -366,7 +364,7 @@ export class ConfigValidator {
     if (config.maxRetries && config.retryInterval) {
       const totalRetryTime = config.maxRetries * config.retryInterval;
       if (totalRetryTime > 60000) { // 1 minute
-        warnings.push({
+        _warnings.push({
           field: 'maxRetries',
           message: 'Total retry time exceeds 1 minute',
           value: config.maxRetries,
@@ -375,7 +373,7 @@ export class ConfigValidator {
       }
     }
 
-    return { errors, warnings };
+    return { errors: _errors, warnings: _warnings };
   }
 
   /**
@@ -383,8 +381,8 @@ export class ConfigValidator {
    */
   private static applyIntelligentFixes(
     config: Partial<LoggerConfig>,
-    errors: ValidationError[],
-    warnings: ValidationError[]
+    _errors: ValidationError[],
+    _warnings: ValidationError[]
   ): void {
     // Auto-fix common URL issues
     if (config.websocketUrl) {

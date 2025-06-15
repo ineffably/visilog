@@ -1,8 +1,8 @@
-const js = require('@eslint/js');
-const tseslint = require('@typescript-eslint/eslint-plugin');
-const tsparser = require('@typescript-eslint/parser');
+import js from '@eslint/js';
+import tseslint from '@typescript-eslint/eslint-plugin';
+import tsparser from '@typescript-eslint/parser';
 
-module.exports = [
+export default [
   js.configs.recommended,
   {
     files: ['**/*.ts', '**/*.tsx'],
@@ -70,14 +70,56 @@ module.exports = [
     }
   },
   {
-    files: ['**/*.js'],
+    // Configuration files that use ES modules
+    files: ['eslint.config.js', 'rollup.config.js', 'jest.config.js'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      sourceType: 'module',
+      globals: {
+        process: 'readonly',
+        Buffer: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly'
+      }
+    }
+  },
+  {
+    // CommonJS test files
+    files: ['test-commonjs.js'],
     languageOptions: {
       ecmaVersion: 2020,
       sourceType: 'script',
       globals: {
         module: 'writable',
         exports: 'writable',
-        require: 'readonly'
+        require: 'readonly',
+        process: 'readonly',
+        console: 'readonly',
+        Buffer: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly'
+      }
+    }
+  },
+  {
+    // Example files - treat as CommonJS for compatibility
+    files: ['examples/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      sourceType: 'script',
+      globals: {
+        module: 'writable',
+        exports: 'writable',
+        require: 'readonly',
+        process: 'readonly',
+        console: 'readonly',
+        Buffer: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly'
       }
     }
   },
@@ -87,8 +129,7 @@ module.exports = [
       'coverage/**',
       'node_modules/**',
       '*.d.ts',
-      'demo-logs/**',
-      'examples/**'
+      'demo-logs/**'
     ]
   }
 ]; 
