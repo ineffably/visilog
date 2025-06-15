@@ -22,6 +22,10 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   release:
     name: Release & Publish
@@ -34,6 +38,7 @@ jobs:
       with:
         fetch-depth: 0
         token: ${{ secrets.GITHUB_TOKEN }}
+        persist-credentials: true
         
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -44,8 +49,8 @@ jobs:
         
     - name: Configure Git
       run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
+        git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
         
     - name: Install dependencies
       run: npm ci
