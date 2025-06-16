@@ -1,5 +1,7 @@
 # Visilog - Getting Started Guide
 
+> **⚠️ Currently in Beta - API may change before stable release**
+>
 > **Real-time logging for modern development workflows**  
 > Stream your browser console logs directly to your file system with zero configuration.
 
@@ -19,10 +21,13 @@ pnpm add visilog
 
 #### 1. **Vite Projects** (Recommended)
 
-```typescript
-// vite.config.ts
+```js
+// vite.config.js
 import { defineConfig } from 'vite';
-import { createVitePlugin } from 'visilog/vite';
+
+// For Vite 6.x compatibility with ESM
+const vitePluginModule = await import('visilog/vite');
+const { createVitePlugin } = vitePluginModule;
 
 export default defineConfig({
   plugins: [
@@ -36,9 +41,9 @@ export default defineConfig({
 
 #### 2. **Webpack Projects**
 
-```typescript
+```js
 // webpack.config.js
-const { createWebpackPlugin } = require('visilog/webpack');
+const { createWebpackPlugin } = require('visilog/webpack')['visilog-webpack-plugin'];
 
 module.exports = {
   plugins: [
@@ -51,9 +56,10 @@ module.exports = {
 
 #### 3. **Manual Setup** (Any Project)
 
-```typescript
-// main.ts or index.ts
-import { createLogger } from 'visilog';
+```js
+// main.js or index.js
+const { visilog } = require('visilog');
+const { createLogger } = visilog;
 
 const logger = createLogger({
   namespace: 'my-app',
@@ -70,8 +76,9 @@ logger.info('Application started', { version: '1.0.0' });
 
 Visilog's enhanced factory system automatically configures itself based on your environment:
 
-```typescript
-import { createLogger, getGlobalLogger, waitForLogger } from 'visilog';
+```js
+const { visilog } = require('visilog');
+const { createLogger, getGlobalLogger, waitForLogger } = visilog;
 
 // Creates a logger with intelligent defaults
 const logger = createLogger({
@@ -92,8 +99,9 @@ const readyLogger = await waitForLogger('my-component', 5000);
 
 Visilog automatically detects your environment and optimizes accordingly:
 
-```typescript
-import { EnvironmentDetector } from 'visilog';
+```js
+const { visilog } = require('visilog');
+const { EnvironmentDetector } = visilog;
 
 const env = EnvironmentDetector.detect();
 console.log(EnvironmentDetector.getDescription(env));
@@ -111,8 +119,9 @@ console.log(EnvironmentDetector.getDescription(env));
 
 ### Basic Logging
 
-```typescript
-import { createLogger } from 'visilog';
+```js
+const { visilog } = require('visilog');
+const { createLogger } = visilog;
 
 const logger = createLogger({ namespace: 'user-service' });
 
@@ -123,26 +132,9 @@ logger.warn('Rate limit approaching', { userId: 123, remaining: 5 });
 logger.error('Authentication failed', { userId: 123, reason: 'invalid_token' });
 ```
 
-### Structured Logging with TypeScript
-
-```typescript
-interface UserAction {
-  userId: number;
-  action: string;
-  metadata?: Record<string, any>;
-}
-
-// Type-safe structured logging
-logger.info<UserAction>('User action completed', {
-  userId: 123,
-  action: 'purchase',
-  metadata: { amount: 99.99, currency: 'USD' }
-});
-```
-
 ### Categorized Logging
 
-```typescript
+```js
 // Create category-specific loggers
 const authLogger = logger.category('auth');
 const dbLogger = logger.category('database');
@@ -155,7 +147,7 @@ apiLogger.error('External API timeout', { service: 'payment-gateway' });
 
 ### Contextual Logging
 
-```typescript
+```js
 // Add persistent context to all logs
 const userLogger = logger.withContext({
   userId: 123,
@@ -169,7 +161,7 @@ userLogger.info('Page viewed', { page: '/dashboard' });
 
 ### Performance Tracking
 
-```typescript
+```js
 // Built-in performance timing
 const timer = logger.startTimer('data-processing');
 
@@ -191,8 +183,9 @@ timer.end({ totalRecords: 1000, errors: 0 });
 
 Visilog validates your configuration and provides intelligent suggestions:
 
-```typescript
-import { ConfigValidator } from 'visilog';
+```js
+const { visilog } = require('visilog');
+const { ConfigValidator } = visilog;
 
 const result = ConfigValidator.validate({
   websocketUrl: 'http://localhost:3001', // ❌ Wrong protocol
@@ -213,7 +206,7 @@ const { config } = ConfigValidator.validateAndFix(invalidConfig);
 
 ### Advanced Configuration
 
-```typescript
+```js
 const logger = createLogger({
   // Connection settings
   websocketUrl: 'ws://localhost:3001',
@@ -247,8 +240,9 @@ const logger = createLogger({
 
 ### Global Registry
 
-```typescript
-import { registry } from 'visilog';
+```js
+const { visilog } = require('visilog');
+const { registry } = visilog;
 
 // Create named loggers
 const authLogger = registry.create({ name: 'auth', namespace: 'security' });
@@ -268,7 +262,7 @@ registry.clear(); // Remove all loggers
 
 ### Error Handling & Recovery
 
-```typescript
+```js
 const logger = createLogger({
   enableAutoRecovery: true,
   onConnectionError: (error) => {
@@ -295,83 +289,56 @@ logger.onConnection((status, details) => {
 });
 ```
 
-### Plugin Integration
+## 🎮 Real-World Examples
 
-#### Vite with Hot Reload
+### React Application
 
-```typescript
-// vite.config.ts
-import { createVitePlugin } from 'visilog/vite';
+```js
+// hooks/useLogger.js
+const { visilog } = require('visilog');
+const { createLogger } = visilog;
+const { useEffect, useMemo } = require('react');
 
-export default defineConfig({
-  plugins: [
-    createVitePlugin({
-      development: true,
-      vite: {
-        enableHMR: true,
-        enableDevtools: true
-      },
-      client: {
-        namespace: 'my-app',
-        enablePerformanceTracking: true
-      },
-      server: {
-        port: 3001,
-        enableHealthCheck: true
-      }
-    })
-  ]
-});
-```
+function useLogger(component) {
+  const logger = useMemo(() => 
+    createLogger({ namespace: 'react-app' }).category(component), 
+    [component]
+  );
+  
+  useEffect(() => {
+    logger.debug(`${component} mounted`);
+    return () => logger.debug(`${component} unmounted`);
+  }, [logger, component]);
+  
+  return logger;
+}
 
-#### Webpack with Dev Server
-
-```typescript
-// webpack.config.js
-const { createWebpackPlugin } = require('visilog/webpack');
-
-module.exports = {
-  plugins: [
-    createWebpackPlugin({
-      webpack: {
-        enableHotReload: true,
-        devServerPort: 3001
-      },
-      client: {
-        fallbackMode: 'console',
-        enableOfflineQueue: true
-      }
-    })
-  ]
-};
-```
-
-## 🎮 Use Cases
-
-### Game Development
-
-```typescript
-const gameLogger = createLogger({ 
-  namespace: 'game-engine',
-  enablePerformanceTracking: true 
-});
-
-// Performance-critical logging
-const frameTimer = gameLogger.startTimer('frame-render');
-renderFrame();
-frameTimer.end({ fps: 60, entities: 1000 });
-
-// Game events
-gameLogger.category('player').info('Level completed', {
-  level: 5,
-  score: 12500,
-  time: 180000
-});
+// components/UserProfile.js
+function UserProfile({ userId }) {
+  const logger = useLogger('UserProfile');
+  
+  const handleAction = (action) => {
+    logger.info('User action', { userId, action, timestamp: Date.now() });
+  };
+  
+  return (
+    <div>
+      <button onClick={() => handleAction('edit-profile')}>
+        Edit Profile
+      </button>
+    </div>
+  );
+}
 ```
 
 ### API Development
 
-```typescript
+```js
+const express = require('express');
+const { visilog } = require('visilog');
+const { createLogger } = visilog;
+
+const app = express();
 const apiLogger = createLogger({ namespace: 'api-server' });
 
 // Request logging with context
@@ -406,61 +373,47 @@ app.get('/users/:id', async (req, res) => {
 });
 ```
 
-### React Application
+## 🔍 Testing Your Setup
 
-```typescript
-// hooks/useLogger.ts
-import { createLogger } from 'visilog';
-import { useEffect, useMemo } from 'react';
+### Quick Test
 
-export function useLogger(component: string) {
-  const logger = useMemo(() => 
-    createLogger({ namespace: 'react-app' }).category(component), 
-    [component]
-  );
-  
-  useEffect(() => {
-    logger.debug(`${component} mounted`);
-    return () => logger.debug(`${component} unmounted`);
-  }, [logger, component]);
-  
-  return logger;
-}
+```bash
+# Run the comprehensive example
+node examples/enhanced-usage.js
 
-// components/UserProfile.tsx
-function UserProfile({ userId }: { userId: number }) {
-  const logger = useLogger('UserProfile');
-  
-  const handleAction = (action: string) => {
-    logger.info('User action', { userId, action, timestamp: Date.now() });
-  };
-  
-  return (
-    <div>
-      <button onClick={() => handleAction('edit-profile')}>
-        Edit Profile
-      </button>
-    </div>
-  );
-}
+# Expected output: Demo of all features working
+```
+
+### Integration Tests
+
+```bash
+# Test core functionality
+npm test
+
+# Test basic integrations
+npm run test:integration
+
+# Test plugin integrations (Vite/Webpack)
+npm run test:integration:plugins
 ```
 
 ## 🔍 Debugging & Monitoring
 
 ### Real-time Log Viewing
 
-Logs are automatically saved to `./demo-logs/` with the following structure:
+Logs are automatically saved to `./logs/` with the following structure:
 
 ```
-demo-logs/
-├── sessions.json          # Session index
-├── session-abc123.json    # Individual session logs
-└── latest.json           # Most recent session
+logs/
+├── index.json            # Session index with metadata
+└── sessions/             # Individual session logs
+    ├── session-abc123.log
+    └── session-def456.log
 ```
 
 ### Log Analysis
 
-```typescript
+```js
 // Access session information
 const sessionId = logger.getSessionId();
 const status = logger.getStatus(); // 'connected' | 'disconnected' | etc.
@@ -477,8 +430,27 @@ if (!validation.isValid) {
 
 ### Common Issues
 
-**1. WebSocket Connection Failed**
-```typescript
+**1. Import/Export Errors**
+```js
+// ❌ Wrong (ESM syntax)
+import { createLogger } from 'visilog';
+
+// ✅ Correct (CommonJS syntax)  
+const { visilog } = require('visilog');
+const { createLogger } = visilog;
+```
+
+**2. Plugin Import Issues**
+```js
+// ❌ Wrong
+const { createWebpackPlugin } = require('visilog/webpack');
+
+// ✅ Correct
+const { createWebpackPlugin } = require('visilog/webpack')['visilog-webpack-plugin'];
+```
+
+**3. WebSocket Connection Failed**
+```js
 // Check if server is running
 const logger = createLogger({
   onConnectionError: (error) => {
@@ -488,10 +460,11 @@ const logger = createLogger({
 });
 ```
 
-**2. Logs Not Appearing**
-```typescript
+**4. Logs Not Appearing**
+```js
 // Verify configuration
-import { ConfigValidator } from 'visilog';
+const { visilog } = require('visilog');
+const { ConfigValidator } = visilog;
 
 const result = ConfigValidator.validate(yourConfig);
 if (!result.isValid) {
@@ -500,24 +473,12 @@ if (!result.isValid) {
 }
 ```
 
-**3. Performance Issues**
-```typescript
-// Optimize for production
-const logger = createLogger({
-  minLevel: 2, // Info and above only
-  maxQueueSize: 100, // Smaller queue
-  flushInterval: 10000, // Less frequent flushing
-  enableCompression: true // Reduce bandwidth
-});
-```
-
 ## 🎯 Next Steps
 
-- **[API Reference](./api-reference.md)** - Complete method documentation
-- **[Configuration Guide](./configuration.md)** - Detailed configuration options
+- **[README](../README.md)** - Complete overview and examples
 - **[Examples](../examples/)** - Real-world implementation examples
-- **[Migration Guide](./migration.md)** - Upgrading from other logging solutions
+- **[Integration Tests](../tests/integration/)** - See working setups
 
 ---
 
-**Need help?** Check our [GitHub Issues](https://github.com/ineffably/visilog/issues) or start a [Discussion](https://github.com/ineffably/visilog/discussions). 
+**Need help?** Check our [GitHub Issues](https://github.com/ineffably/visilog/issues) or tell your LLM to read the logs in `./logs/` for debugging assistance!

@@ -4,14 +4,15 @@
  */
 
 // Import the enhanced factory and utilities
+const { visilog } = require('../dist/index.js');
 const { 
   createLogger, 
-  // getGlobalLogger, 
-  // waitForLogger, 
+  getGlobalLogger, 
+  waitForLogger, 
   registry,
   ConfigValidator,
   EnvironmentDetector 
-} = require('../dist/index.js');
+} = visilog;
 
 async function demonstrateEnhancements() {
   console.log('🚀 Visilog Enhanced Features Demo\n');

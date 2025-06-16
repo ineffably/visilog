@@ -1,9 +1,9 @@
 # Visilog
 
 <div align="center">
+  <img src="https://img.shields.io/badge/Status-Beta-yellow" alt="Beta Status">
   <img src="https://img.shields.io/badge/TypeScript-Ready-blue" alt="TypeScript Ready">
   <img src="https://img.shields.io/badge/License-MIT-green" alt="License">
-  <img src="https://img.shields.io/npm/v/visilog" alt="npm version">
   <a href="https://github.com/ineffably/visilog/actions/workflows/ci.yml">
     <img src="https://github.com/ineffably/visilog/actions/workflows/ci.yml/badge.svg" alt="CI Status">
   </a>
@@ -13,7 +13,8 @@
 
 <p align="center">
   <b>Stream your browser console logs directly to files so your LLM can read them</b><br>
-  <sub>Works with Vite and Webpack. No MCP setup required - just tell your LLM to read the log files like any other browser logs.</sub>
+  <sub>Works with Vite and Webpack. No MCP setup required - just tell your LLM to read the log files like any other browser logs.</sub><br>
+  <strong>⚠️ Currently in Beta - API may change before stable release</strong>
 </p>
 
 ## Why This Tool?
@@ -50,7 +51,10 @@ npm install visilog
 ```ts
 // vite.config.ts
 import { defineConfig } from 'vite'
-import { createVitePlugin } from 'visilog/vite'
+
+// For ES modules (Vite 6.x with type: "module")
+const vitePluginModule = await import('visilog/vite');
+const { createVitePlugin } = vitePluginModule;
 
 export default defineConfig({
   plugins: [
@@ -64,6 +68,8 @@ export default defineConfig({
 })
 ```
 
+**Note**: For Vite 6.x compatibility, import the plugin using dynamic import as shown above.
+
 That's it! Your browser logs are now automatically saved to files. Just tell your LLM to read the `./logs/` folder.
 
 ### Tell Your LLM
@@ -76,9 +82,9 @@ Your LLM can now see all your browser console output without you copying and pas
 
 ### Webpack Plugin
 
-```ts
+```js
 // webpack.config.js
-const { createWebpackPlugin } = require('visilog/webpack')
+const { createWebpackPlugin } = require('visilog/webpack')['visilog-webpack-plugin'];
 
 module.exports = {
   plugins: [
@@ -91,30 +97,36 @@ module.exports = {
 }
 ```
 
+**Note**: Due to the CommonJS module structure, import the plugin as shown above.
+
 ### Manual Setup
 
 If you're not using Vite or Webpack, you can set up the logger manually:
 
-```ts
+```js
 // Server (Node.js) - saves logs to files
-import { WebSocketLoggerServer } from 'visilog/server'
+const { visilog } = require('visilog');
+const { WebSocketLoggerServer } = visilog;
 
 const server = new WebSocketLoggerServer({
   logsDir: './logs'  // Your logs will be saved here
-})
+});
 
-await server.start()
+await server.start();
 ```
 
-```ts
+```js
 // Client (Browser) - captures console logs
-import { WebSocketLogger } from 'visilog/client'
+const { visilog } = require('visilog');
+const { WebSocketLogger } = visilog;
 
-const logger = new WebSocketLogger()
-logger.enableConsoleOverride() // Automatically capture all console.* calls
+const logger = new WebSocketLogger();
+logger.enableConsoleOverride(); // Automatically capture all console.* calls
 
 // Now all your console.log, console.error, etc. are saved to files your LLM can read!
 ```
+
+**Note**: Visilog now uses CommonJS modules. Import using the structure shown above.
 
 ## How Your LLM Reads the Logs
 
@@ -205,160 +217,81 @@ interface ClientConfig {
 
 ## Client Usage Example
 
-### 🚀 Complete E-commerce Application Example
+### 🚀 Real-World API Client Example
 
-Here's a comprehensive example showing how to use the WebSocket logger in a real application:
+Here's a concise example showing automatic console log capture in a typical data fetching scenario:
 
-```ts
-// vite.config.ts - Setup (Zero Configuration)
-import { defineConfig } from 'vite'
-import { createVitePlugin } from 'visilog/vite'
+```js
+// vite.config.js - Zero Configuration Setup
+import { defineConfig } from 'vite';
+const viteModule = await import('visilog/vite');
+const { createVitePlugin } = viteModule;
 
 export default defineConfig({
   plugins: [
-    createVitePlugin() // That's it! All console logs now saved to ./logs/
+    createVitePlugin() // All console logs now saved to ./logs/
   ]
-})
+});
 ```
 
-```tsx
-// ShoppingApp.tsx - React Component with Full Logging
-import React, { useState, useEffect } from 'react'
-
-export function ShoppingApp() {
-  const [user, setUser] = useState(null)
-  const [cart, setCart] = useState([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    console.log('🚀 Shopping app initializing', { 
-      timestamp: new Date().toISOString(),
-      userAgent: navigator.userAgent 
-    }) // ✅ Logged to file
-
-    initializeApp()
-  }, [])
-
-  const initializeApp = async () => {
+```js
+// api-client.js - Automatic Console Log Capture
+class ApiClient {
+  async fetchUserData(userId) {
+    console.log('🔍 Fetching user data', { userId, timestamp: Date.now() });
+    // ✅ Automatically logged to file
+    
     try {
-      console.log('🔍 Loading user session') // ✅ Logged to file
+      const response = await fetch(`/api/users/${userId}`);
       
-      const userData = await fetchUserSession()
-      setUser(userData)
+      if (!response.ok) {
+        console.warn('⚠️ API response not OK', { 
+          status: response.status, 
+          userId 
+        }); // ✅ Warning logged to file
+      }
       
-      console.log('✅ User session loaded', { 
+      const userData = await response.json();
+      
+      console.info('✅ User data loaded', {
         userId: userData.id,
-        userRole: userData.role 
-      }) // ✅ Logged to file
-
-      const cartData = await fetchUserCart(userData.id)
-      setCart(cartData)
+        role: userData.role,
+        lastLogin: userData.lastLogin
+      }); // ✅ Success with structured data logged
       
-      console.info('🛒 Cart loaded', { 
-        itemCount: cartData.length,
-        cartTotal: calculateTotal(cartData) 
-      }) // ✅ Logged to file as INFO level
-
+      return userData;
+      
     } catch (error) {
-      console.error('❌ App initialization failed', { 
+      console.error('❌ Failed to fetch user data', {
+        userId,
         error: error.message,
         stack: error.stack,
-        url: window.location.href 
-      }) // ✅ Complete error logged to file
-    } finally {
-      setLoading(false)
-      console.log('🏁 App initialization complete') // ✅ Logged to file
+        url: window.location.href
+      }); // ✅ Complete error context logged to file
+      
+      throw error;
     }
   }
-
-  const addToCart = async (product) => {
-    console.log('🛒 Adding item to cart', { 
-      productId: product.id,
-      productName: product.name,
-      price: product.price,
-      currentCartSize: cart.length 
-    }) // ✅ Logged to file
-
-try {
-      const response = await fetch('/api/cart/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: product.id, quantity: 1 })
-      })
-
-      if (!response.ok) {
-        console.warn('⚠️ Add to cart response not OK', { 
-          status: response.status,
-          productId: product.id 
-        }) // ✅ Logged to file
-      }
-
-      const updatedCart = await response.json()
-      setCart(updatedCart.items)
-      
-      console.log('✅ Item added to cart successfully', { 
-        productId: product.id,
-        newCartSize: updatedCart.items.length,
-        newTotal: updatedCart.total 
-      }) // ✅ Logged to file
-
-    } catch (error) {
-      console.error('💥 Failed to add item to cart', { 
-        error: error.message,
-        productId: product.id,
-        stack: error.stack 
-      }) // ✅ Error logged to file
-    }
+  
+  async savePreferences(userId, preferences) {
+    console.log('💾 Saving user preferences', { userId, preferences });
+    // ✅ Logged with full context
+    
+    const result = await this.post(`/api/users/${userId}/preferences`, preferences);
+    
+    console.log('✅ Preferences saved', { userId, changedFields: Object.keys(preferences) });
+    // ✅ Operation result logged
+    
+    return result;
   }
-
-  const checkout = async () => {
-    console.log('💳 Starting checkout process', { 
-      itemCount: cart.length,
-      total: calculateTotal(cart),
-      items: cart.map(item => ({ id: item.id, quantity: item.quantity })) 
-    }) // ✅ Logged to file
-
-    try {
-      const order = await processPayment(cart)
-      
-      console.log('✅ Checkout successful!', { 
-        orderId: order.id,
-        total: order.total,
-        paymentMethod: order.paymentMethod 
-      }) // ✅ Logged to file
-      
-      setCart([])
-      return order
-      
-} catch (error) {
-      console.error('❌ Checkout failed', { 
-        error: error.message,
-        cartItems: cart,
-        total: calculateTotal(cart),
-        userId: user?.id 
-      }) // ✅ Complete error context logged
-      throw error
-    }
-  }
-
-  if (loading) return <div>Loading...</div>
-
-  return (
-    <div>
-      <h1>Shopping App</h1>
-      {/* Your component JSX */}
-      <button onClick={() => addToCart(selectedProduct)}>
-        Add to Cart
-      </button>
-      <button onClick={checkout}>
-        Checkout ({cart.length} items)
-      </button>
-    </div>
-  )
 }
+
+// Your existing code - no changes needed!
+const client = new ApiClient();
+await client.fetchUserData(123); // All logs automatically saved to files
 ```
 
-**Every console statement above is automatically captured and saved to structured JSON log files that your LLM can read!**
+**Every console statement is automatically captured and saved to structured JSON log files that your LLM can read - no code changes required!**
 
 ### Working with Multiple Projects
 
@@ -397,40 +330,159 @@ Each log entry is saved as a structured JSON object on a single line:
 {"timestamp":"2024-01-15T10:30:17.789Z","level":"error","message":"❌ Checkout failed","sessionId":"a1b2c3d4","url":"http://localhost:3000","data":{"error":"Payment declined","cartItems":[{"id":1,"quantity":2}],"total":99.99,"userId":123}}
 ```
 
+## Enhanced Features
+
+Visilog includes advanced features for professional development workflows:
+
+### Smart Logger Factory
+
+```js
+const { visilog } = require('visilog');
+const { createLogger, registry, ConfigValidator } = visilog;
+
+// Create logger with intelligent auto-configuration
+const logger = createLogger({
+  name: 'my-app',
+  namespace: 'frontend',
+  autoStart: true,
+  enableAutoRecovery: true,
+  fallbackMode: 'console'
+});
+
+// Structured logging with context
+logger.info('User logged in', {
+  userId: 12345,
+  timestamp: Date.now(),
+  metadata: { userAgent: navigator.userAgent }
+});
+```
+
+### Configuration Validation & Auto-Fix
+
+```js
+const invalidConfig = {
+  websocketUrl: 'http://localhost:3001', // Wrong protocol
+  maxRetries: '5', // Wrong type
+  enableWebSocket: 'yes' // Wrong type
+};
+
+const { config: fixedConfig, validation } = ConfigValidator.validateAndFix(invalidConfig);
+// Automatically converts to: ws://localhost:3001, 5, true
+```
+
+### Environment Detection
+
+```js
+const { EnvironmentDetector } = visilog;
+
+const env = EnvironmentDetector.detect();
+console.log(env); // { isDevelopment: true, isBrowser: true, buildTool: 'vite' }
+```
+
+### Performance Tracking
+
+```js
+const timer = logger.startTimer('data-processing');
+
+// Some work...
+timer.lap('validation-complete', { recordsProcessed: 1000 });
+
+// More work...
+timer.end({ totalRecords: 1000, errors: 0 });
+```
+
+### Global Registry
+
+```js
+// Create named loggers for different modules
+registry.create({ name: 'user-service', namespace: 'backend' });
+registry.create({ name: 'analytics', namespace: 'tracking' });
+
+// Access from anywhere in your app
+const userLogger = registry.get('user-service');
+userLogger.info('Service started', { port: 3000 });
+```
+
+## Testing & Integration
+
+### Basic Usage Test
+
+```js
+// examples/enhanced-usage.js - Run this to test your setup
+const { visilog } = require('visilog');
+const { createLogger } = visilog;
+
+const logger = createLogger({
+  name: 'test-app',
+  autoStart: true,
+  fallbackMode: 'console'
+});
+
+logger.info('Test message', { timestamp: Date.now() });
+console.log('✅ Visilog is working!');
+```
+
+### Integration Tests
+
+Visilog includes comprehensive integration tests:
+
+```bash
+# Test core functionality
+npm test
+
+# Test basic integrations
+npm run test:integration
+
+# Test plugin integrations (Vite/Webpack)
+npm run test:integration:plugins
+```
+
+### Compatibility Testing
+
+Run the example to verify your setup:
+
+```bash
+node examples/enhanced-usage.js
+```
+
+This demonstrates all enhanced features including environment detection, configuration validation, structured logging, and performance tracking.
+
 ## Manual API (Advanced Usage)
 
 If you need more control, you can use the logger programmatically:
 
 ### Client API
 
-```ts
-import { WebSocketLogger } from 'visilog/client'
+```js
+const { visilog } = require('visilog');
+const { WebSocketLogger } = visilog;
 
-const logger = new WebSocketLogger()
+const logger = new WebSocketLogger();
 
 // Start capturing console logs
-logger.enableConsoleOverride()
+logger.enableConsoleOverride();
 
 // Manual logging
-logger.log('Custom message')
-logger.error('Something went wrong')
+logger.log('Custom message');
+logger.error('Something went wrong');
 
 // Stop and cleanup
-logger.destroy()
+logger.destroy();
 ```
 
 ### Server API
 
-```ts
-import { WebSocketLoggerServer } from 'visilog/server'
+```js
+const { visilog } = require('visilog');
+const { WebSocketLoggerServer } = visilog;
 
 const server = new WebSocketLoggerServer({
   logsDir: './logs'
-})
+});
 
-await server.start()
+await server.start();
 // ... logs are being saved to files
-await server.stop()
+await server.stop();
 ```
 
 ## Framework Examples
@@ -453,9 +505,9 @@ export default defineConfig({
 
 ### Next.js
 
-```ts
+```js
 // next.config.js
-const { createWebpackPlugin } = require('visilog/webpack')
+const { createWebpackPlugin } = require('visilog/webpack')['visilog-webpack-plugin'];
 
 module.exports = {
   webpack: (config, { dev }) => {
@@ -493,18 +545,82 @@ export default defineConfig({
 
 ## Troubleshooting
 
+### Common Issues
+
 **Logs not appearing?**
 - Make sure your dev server is running
 - Check that the `logs` directory was created
 - Look for any console errors
 
+**Import/Export Errors?**
+- Visilog now uses CommonJS modules. Use `const { visilog } = require('visilog')` instead of `import`
+- For Webpack plugin: `require('visilog/webpack')['visilog-webpack-plugin']`
+- For Vite plugin: Use dynamic import as shown in examples
+
+**Plugin not working?**
+- Check you're using the correct import syntax for your build tool
+- Verify the plugin is added to the plugins array in your config
+- Look for webpack/vite console errors during build
+
+**Vite 6.x compatibility issues?**
+- Use dynamic import for the Vite plugin: `const module = await import('visilog/vite')`
+- Make sure your package.json has `"type": "module"` for ES modules
+
 **Want to exclude certain logs?**
 - Use `minLevel: 1` in configuration to skip debug messages
 - Use `minLevel: 3` to only capture errors
 
+### Getting Help
+
 **Need help?**
 - Tell your LLM to read the log files directly from `./logs/`
 - Include your configuration for better assistance
+- Run `node examples/enhanced-usage.js` to test basic functionality
+- Check the integration tests: `npm run test:integration`
+
+## Quick Reference
+
+### Installation & Basic Setup
+```bash
+npm install visilog
+```
+
+### CommonJS Import Pattern
+```js
+const { visilog } = require('visilog');
+const { createLogger, WebSocketLogger, WebSocketLoggerServer } = visilog;
+```
+
+### Plugin Imports
+```js
+// Webpack
+const { createWebpackPlugin } = require('visilog/webpack')['visilog-webpack-plugin'];
+
+// Vite (with dynamic import)
+const viteModule = await import('visilog/vite');
+const { createVitePlugin } = viteModule;
+```
+
+### Testing Your Setup
+```bash
+node examples/enhanced-usage.js  # Test all features
+npm run test:integration        # Test integrations
+```
+
+### LLM Commands
+- `"Read the logs in ./logs/ and help debug this error"`
+- `"Check the latest session log for issues"`
+- `"Analyze the console output and suggest fixes"`
+
+### File Structure
+```
+logs/
+├── index.json                 # Session metadata
+└── sessions/                  # Per-session logs
+    └── session-*.log          # JSON log entries
+```
+
+---
 
 ## License
 
@@ -518,4 +634,4 @@ MIT License - Perfect for use with any LLM or AI assistant! 🤖
 
 ## 🔍 **Search Terms**
 
-*Looking for: browser log streaming, LLM debugging tools, console log visibility, AI assistant integration, Vite logging plugin, Webpack console streaming, file-based logging, no MCP logging, real-time browser logs, TypeScript logging tools, developer experience tools* 
+*Looking for: browser log streaming, LLM debugging tools, console log visibility, AI assistant integration, Vite logging plugin, Webpack console streaming, file-based logging, no MCP logging, real-time browser logs, TypeScript logging tools, developer experience tools, CommonJS logging* 
