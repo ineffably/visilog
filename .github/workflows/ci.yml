@@ -38,15 +38,15 @@ jobs:
       run: npm run typecheck
       continue-on-error: true  # Allow warnings but still report them
       
+    - name: Build project
+      run: npm run build
+      
     - name: Run tests
       run: npm test
       
     - name: Run tests with coverage
       run: npm run test:coverage
       continue-on-error: true  # Don't fail on coverage thresholds
-      
-    - name: Build project
-      run: npm run build
       
     - name: Extract Coverage Percentage
       if: matrix.node-version == '20.x'

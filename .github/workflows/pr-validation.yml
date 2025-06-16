@@ -40,11 +40,11 @@ jobs:
       run: npm run typecheck
       continue-on-error: true
       
-    - name: Run tests with coverage
-      run: npm run test:coverage
-      
     - name: Build project
       run: npm run build
+      
+    - name: Run tests with coverage
+      run: npm run test:coverage
       
     - name: Validate package can be packed
       run: |

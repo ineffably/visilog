@@ -36,8 +36,8 @@ jobs:
     - name: Run tests after update
       run: |
         npm ci
-        npm test
         npm run build
+        npm test
         
     - name: Create PR for dependency updates
       uses: peter-evans/create-pull-request@v5
