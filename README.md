@@ -7,13 +7,12 @@
   <a href="https://github.com/ineffably/visilog/actions/workflows/ci.yml">
     <img src="https://github.com/ineffably/visilog/actions/workflows/ci.yml/badge.svg" alt="CI Status">
   </a>
-  <img src="https://raw.githubusercontent.com/ineffably/visilog/main/badges/coverage.svg" alt="Test Coverage">
   <img src="https://img.shields.io/badge/No%20MCP-Required-brightgreen" alt="No MCP Required">
 </div>
 
 <p align="center">
   <b>Stream your browser console logs directly to files so your LLM can read them</b><br>
-  <sub>Works with Vite and Webpack. No MCP setup required - just tell your LLM to read the log files like any other browser logs.</sub><br>
+  <sub>Zero-config setup with simple imports. No MCP setup required - just tell your LLM to read the log files.</sub><br>
   <strong>⚠️ Currently in Beta - API may change before stable release</strong>
 </p>
 
@@ -25,18 +24,18 @@ When working with **LLMs and AI assistants** on web development, you constantly 
 - 🤖 **AI-assisted debugging** - Let your LLM see exactly what's happening in the browser
 - 🔍 **Log visibility** - Stream console logs in real-time to your file system  
 - 🚫 **No MCP required** - Simple file-based approach, no complex protocols
-- ⚡ **Developer experience** - Zero-config setup with Vite and Webpack plugins
+- ⚡ **Zero-config setup** - One line of code to get started
 
 ## Features
 
 - 🤖 **LLM-ready** - AI assistants can read browser logs directly from files
 - 📁 **File-based logging** - Console streaming to your file system, no databases needed
-- 🔌 **Vite & Webpack plugins** - Drop-in integration for modern development tools
+- 🚀 **Simple integration** - One import line, works with any build system
 - 📱 **Session tracking** - Organized browser log files per session with metadata
-- ⚡ **Zero configuration** - One-line setup, works out of the box
+- ⚡ **Zero configuration** - Auto-detects development environment
 - 🚫 **No MCP protocol** - Simple file approach, no Model Context Protocol complexity
 - 🔄 **Real-time streaming** - WebSocket-based console log streaming
-- 🎯 **Developer experience** - Built for modern TypeScript development workflows
+- 🎯 **Framework agnostic** - Works with React, Vue, Angular, or vanilla JS
 
 ## Quick Start
 
@@ -46,31 +45,75 @@ When working with **LLMs and AI assistants** on web development, you constantly 
 npm install visilog
 ```
 
-### Vite Plugin (Recommended)
+### Simple Integration (Recommended)
 
-```ts
-// vite.config.ts
-import { defineConfig } from 'vite'
+**Option 1: Auto-Import (Easiest)**
 
-// For ES modules (Vite 6.x with type: "module")
-const vitePluginModule = await import('visilog/vite');
-const { createVitePlugin } = vitePluginModule;
+```javascript
+// In your main.js, index.js, or app entry point
+import 'visilog/auto';
 
-export default defineConfig({
-  plugins: [
-    createVitePlugin({
-      // Optional: customize where logs are saved
-      server: {
-        logsDir: 'logs'  // Default: saves to ./logs/ folder
-      }
-    })
-  ]
-})
+// That's it! Console logs will now be streamed to files in development
+console.log('This will be captured by Visilog automatically');
 ```
 
-**Note**: For Vite 6.x compatibility, import the plugin using dynamic import as shown above.
+**Option 2: Script Tag (No Build Tool)**
 
-That's it! Your browser logs are now automatically saved to files. Just tell your LLM to read the `./logs/` folder.
+```html
+<!-- Add to your HTML during development -->
+<script src="https://unpkg.com/visilog/dist/browser.js"></script>
+<script>
+  if (VisiLog.isDevEnvironment()) {
+    VisiLog.connect('ws://localhost:3001');
+  }
+</script>
+```
+
+**Option 3: Server Middleware (Node.js)**
+
+```javascript
+// Express/Koa/Fastify - auto-inject into HTML responses
+import { createDevMiddleware } from 'visilog/middleware';
+
+app.use(createDevMiddleware({
+  port: 3001,
+  injectScript: true  // Automatically adds client script to HTML
+}));
+```
+
+**Option 4: Manual Control**
+
+```javascript
+// Only load in development
+if (process.env.NODE_ENV === 'development') {
+  import('visilog/client').then(({ WebSocketLogger }) => {
+    const logger = new WebSocketLogger({
+      websocketUrl: 'ws://localhost:3001'
+    });
+    logger.enableConsoleOverride();
+  });
+}
+```
+
+### Start the Server
+
+For all methods, you need a Visilog server running:
+
+```javascript
+// dev-logger.js
+import { WebSocketLoggerServer } from 'visilog/server';
+
+const server = new WebSocketLoggerServer({
+  port: 3001,
+  logsDir: './logs'
+});
+
+server.start().then(() => {
+  console.log('🔌 Visilog server running on port 3001');
+});
+```
+
+Run it: `node dev-logger.js`
 
 ### Tell Your LLM
 
@@ -80,53 +123,64 @@ That's it! Your browser logs are now automatically saved to files. Just tell you
 
 Your LLM can now see all your browser console output without you copying and pasting anything!
 
-### Webpack Plugin
+## Why Simple Integration?
 
-```js
-// webpack.config.js
-const { createWebpackPlugin } = require('visilog/webpack')['visilog-webpack-plugin'];
+**The simple integration approach is much better than complex build tool plugins:**
 
-module.exports = {
-  plugins: [
-    createWebpackPlugin({
-      server: {
-        logsDir: 'logs'  // Where to save log files
-      }
-    })
-  ]
+- ✅ **Works with any build system** - No webpack/vite configuration needed
+- ✅ **Zero impact on production** - Only activates in development automatically
+- ✅ **Easy to debug** - Simple imports, no complex plugin interactions
+- ✅ **Framework agnostic** - Works with React, Vue, Angular, Svelte, or vanilla JS
+- ✅ **No build tool updates needed** - Won't break when webpack/vite updates
+
+### Framework Examples
+
+**React:**
+```javascript
+// src/index.js
+import React from 'react';
+import ReactDOM from 'react-dom';
+import App from './App';
+import 'visilog/auto'; // Add this line
+
+ReactDOM.render(<App />, document.getElementById('root'));
+```
+
+**Vue.js:**
+```javascript
+// src/main.js
+import { createApp } from 'vue';
+import App from './App.vue';
+import 'visilog/auto'; // Add this line
+
+createApp(App).mount('#app');
+```
+
+**Angular:**
+```typescript
+// src/main.ts
+import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+import { AppModule } from './app/app.module';
+import 'visilog/auto'; // Add this line
+
+platformBrowserDynamic().bootstrapModule(AppModule);
+```
+
+**Next.js:**
+```javascript
+// pages/_app.js
+import { useEffect } from 'react';
+
+function MyApp({ Component, pageProps }) {
+  useEffect(() => {
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+      import('visilog/auto');
+    }
+  }, []);
+
+  return <Component {...pageProps} />;
 }
 ```
-
-**Note**: Due to the CommonJS module structure, import the plugin as shown above.
-
-### Manual Setup
-
-If you're not using Vite or Webpack, you can set up the logger manually:
-
-```js
-// Server (Node.js) - saves logs to files
-const { visilog } = require('visilog');
-const { WebSocketLoggerServer } = visilog;
-
-const server = new WebSocketLoggerServer({
-  logsDir: './logs'  // Your logs will be saved here
-});
-
-await server.start();
-```
-
-```js
-// Client (Browser) - captures console logs
-const { visilog } = require('visilog');
-const { WebSocketLogger } = visilog;
-
-const logger = new WebSocketLogger();
-logger.enableConsoleOverride(); // Automatically capture all console.* calls
-
-// Now all your console.log, console.error, etc. are saved to files your LLM can read!
-```
-
-**Note**: Visilog now uses CommonJS modules. Import using the structure shown above.
 
 ## How Your LLM Reads the Logs
 
@@ -619,6 +673,29 @@ logs/
 └── sessions/                  # Per-session logs
     └── session-*.log          # JSON log entries
 ```
+
+## Advanced: Build Tool Plugins
+
+For users who need deep build system integration, Visilog also provides Webpack and Vite plugins (though the simple integration above is recommended):
+
+```javascript
+// Advanced: Webpack Plugin (complex)
+const { createWebpackPlugin } = require('visilog/webpack')['visilog-webpack-plugin'];
+
+module.exports = {
+  plugins: [createWebpackPlugin({ /* config */ })]
+}
+
+// Advanced: Vite Plugin (complex)  
+const viteModule = await import('visilog/vite');
+const { createVitePlugin } = viteModule;
+
+export default defineConfig({
+  plugins: [createVitePlugin({ /* config */ })]
+});
+```
+
+**Note**: These plugins offer advanced features like automatic HTML injection but are more complex to set up and debug. The simple integration methods above are recommended for most users.
 
 ---
 

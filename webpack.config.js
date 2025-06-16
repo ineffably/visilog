@@ -82,6 +82,47 @@ const configs = [
       libraryTarget: 'commonjs2',
     },
   },
+  // Auto-setup entry
+  {
+    ...baseConfig,
+    entry: './auto.ts',
+    output: {
+      path: path.resolve(__dirname, 'dist'),
+      filename: 'auto.js',
+      library: 'visilog-auto',
+      libraryTarget: 'commonjs2',
+    },
+  },
+  // Browser bundle entry
+  {
+    ...baseConfig,
+    entry: './browser.ts',
+    output: {
+      path: path.resolve(__dirname, 'dist'),
+      filename: 'browser.js',
+      library: 'VisiLog',
+      libraryTarget: 'umd',
+      globalObject: 'typeof self !== \'undefined\' ? self : this',
+    },
+    externals: {
+      // Don't externalize for browser bundle - we want everything included
+    },
+  },
+  // Middleware entry
+  {
+    ...baseConfig,
+    entry: './middleware.ts',
+    output: {
+      path: path.resolve(__dirname, 'dist'),
+      filename: 'middleware.js',
+      library: 'visilog-middleware',
+      libraryTarget: 'commonjs2',
+    },
+    externals: {
+      ...baseConfig.externals,
+      'express': 'commonjs express'
+    },
+  },
 ];
 
 module.exports = configs;

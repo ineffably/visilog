@@ -1,8 +1,13 @@
 // Core exports
 export { WebSocketLogger } from './client/websocket-logger';
 export { WebSocketLoggerServer } from './server/websocket-logger-server';
+
+// Build tool plugins (complex integration)
 export { createVitePlugin } from './plugins/vite-plugin';
 export { createWebpackPlugin } from './plugins/webpack-plugin';
+
+// Simple integration methods (recommended)
+export { createDevMiddleware, express, koa, fastify } from './middleware';
 
 // Enhanced factory and utilities (Phase 1 & 2 improvements)
 export { 

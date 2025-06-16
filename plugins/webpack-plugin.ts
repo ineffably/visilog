@@ -57,7 +57,8 @@ export class WebSocketLoggerWebpackPlugin implements WebpackPluginInstance {
 
     // Determine if we're in development mode
     compiler.hooks.environment.tap(pluginName, () => {
-      this.isDevelopment = compiler.options.mode === 'development' && (this.config.development ?? true);
+      // Use plugin config to override webpack mode if explicitly set
+      this.isDevelopment = this.config.development ?? (compiler.options.mode === 'development');
     });
 
     // Start server when compilation begins
@@ -82,23 +83,53 @@ export class WebSocketLoggerWebpackPlugin implements WebpackPluginInstance {
         // Hook into HTML webpack plugin if available
         const HtmlWebpackPlugin = this.getHtmlWebpackPlugin();
         if (HtmlWebpackPlugin) {
-          HtmlWebpackPlugin.getHooks(compilation).beforeEmit.tapAsync(
-            pluginName,
-            (data: any, callback: any) => {
-              data.html = this.injectClientScript(data.html);
-              callback(null, data);
+          try {
+            // Try to get hooks - this varies by html-webpack-plugin version
+            const hooks = HtmlWebpackPlugin.getHooks ? HtmlWebpackPlugin.getHooks(compilation) : compilation.hooks.htmlWebpackPluginBeforeHtmlProcessing;
+            if (hooks && hooks.beforeEmit) {
+              hooks.beforeEmit.tapAsync(
+                pluginName,
+                (data: any, callback: any) => {
+                  data.html = this.injectClientScript(data.html);
+                  callback(null, data);
+                }
+              );
+            } else {
+              // Fallback for newer versions - try compilation processorAssets hook
+              compilation.hooks.processAssets?.tap(
+                {
+                  name: pluginName,
+                  stage: compilation.constructor.PROCESS_ASSETS_STAGE_OPTIMIZE_INLINE
+                },
+                (assets: any) => {
+                  Object.keys(assets).forEach(filename => {
+                    if (filename.endsWith('.html')) {
+                      const htmlAsset = assets[filename];
+                      const html = htmlAsset.source();
+                      const modifiedHtml = this.injectClientScript(html);
+                      assets[filename] = {
+                        source: () => modifiedHtml,
+                        size: () => modifiedHtml.length
+                      };
+                    }
+                  });
+                }
+              );
             }
-          );
+          } catch (error) {
+            console.warn('Failed to hook into HTML webpack plugin:', error);
+          }
         }
       });
 
       // Add virtual module resolution
       compiler.hooks.normalModuleFactory.tap(pluginName, (nmf) => {
-        nmf.hooks.resolve.tapAsync(pluginName, (result: any, callback: any) => {
-          if (result.request === '@websocket-logger/client') {
-            result.request = this.getClientModulePath();
+        nmf.hooks.beforeResolve.tapAsync(pluginName, (resolveData: any, callback: any) => {
+          if (resolveData?.request === '@websocket-logger/client') {
+            resolveData.request = this.getClientModulePath();
           }
-          callback(null, result);
+          // For bailing hooks, call callback() with no arguments to continue
+          callback();
         });
       });
     }

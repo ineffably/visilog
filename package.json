@@ -1,9 +1,41 @@
 {
   "name": "visilog",
   "version": "0.7.2",
-  "description": "This allows LLMs to easily read your browser console logs by streaming them to your file system when using Vite or Webpack. No MCP required, tell your LLM to read the logs as it would browser logs.",
+  "description": "Stream browser console logs to files for LLM debugging. Zero-config setup with simple imports. No MCP required - just tell your LLM to read the log files.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    },
+    "./auto": {
+      "types": "./dist/auto.d.ts",
+      "import": "./dist/auto.js",
+      "require": "./dist/auto.js"
+    },
+    "./browser": {
+      "types": "./dist/browser.d.ts",
+      "import": "./dist/browser.js",
+      "require": "./dist/browser.js"
+    },
+    "./middleware": {
+      "types": "./dist/middleware.d.ts",
+      "import": "./dist/middleware.js",
+      "require": "./dist/middleware.js"
+    },
+    "./client": {
+      "types": "./dist/client/websocket-logger.d.ts",
+      "import": "./dist/client/websocket-logger.js",
+      "require": "./dist/client/websocket-logger.js"
+    },
+    "./server": {
+      "types": "./dist/server/websocket-logger-server.d.ts",
+      "import": "./dist/server/websocket-logger-server.js",
+      "require": "./dist/server/websocket-logger-server.js"
+    }
+  },
   "files": [
     "dist",
     "README.md",
@@ -17,10 +49,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:integration": "jest --testPathPattern=integration/basic-integration",
-    "test:integration:plugins": "jest --testPathPattern=integration --testNamePattern=\"(Vite|Webpack) Plugin Integration\"",
-    "test:integration:vite": "jest --testPathPattern=vite-plugin",
-    "test:integration:webpack": "jest --testPathPattern=webpack-plugin",
+    "test:integration": "jest --testPathPattern=integration",
     "test:ci": "jest --coverage --watchAll=false --passWithNoTests",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -99,27 +128,5 @@
   },
   "engines": {
     "node": ">=16.0.0"
-  },
-  "exports": {
-    ".": {
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    },
-    "./client": {
-      "require": "./dist/client/websocket-logger.js",
-      "types": "./dist/client/websocket-logger.d.ts"
-    },
-    "./server": {
-      "require": "./dist/server/websocket-logger-server.js",
-      "types": "./dist/server/websocket-logger-server.d.ts"
-    },
-    "./vite": {
-      "require": "./dist/plugins/vite-plugin.js",
-      "types": "./dist/plugins/vite-plugin.d.ts"
-    },
-    "./webpack": {
-      "require": "./dist/plugins/webpack-plugin.js",
-      "types": "./dist/plugins/webpack-plugin.d.ts"
-    }
   }
 }
