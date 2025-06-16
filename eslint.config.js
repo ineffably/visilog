@@ -86,7 +86,7 @@ module.exports = [
   },
   {
     // CommonJS configuration and test files
-    files: ['test-commonjs.js', 'webpack.config.js', 'tests/fixtures/**/webpack.config.js', 'eslint.config.js'],
+    files: ['test-commonjs.js', 'webpack.config.js', 'tests/fixtures/**/webpack.config.js', 'eslint.config.js', 'jest.config.js'],
     languageOptions: {
       ecmaVersion: 2020,
       sourceType: 'script',
