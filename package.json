@@ -1,6 +1,6 @@
 {
   "name": "visilog",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "description": "Stream browser console logs to files for LLM debugging. Zero-config setup with simple imports. No MCP required - just tell your LLM to read the log files.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
