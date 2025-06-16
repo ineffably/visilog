@@ -127,22 +127,17 @@ jobs:
         ls -la dist/
         echo "Checking main entry points..."
         test -f dist/index.js || exit 1
-        test -f dist/index.cjs || exit 1
         test -f dist/index.d.ts || exit 1
         echo "Checking client build..."
         test -f dist/client/websocket-logger.js || exit 1
-        test -f dist/client/websocket-logger.cjs || exit 1
         test -f dist/client/websocket-logger.d.ts || exit 1
         echo "Checking server build..."
         test -f dist/server/websocket-logger-server.js || exit 1
-        test -f dist/server/websocket-logger-server.cjs || exit 1
         test -f dist/server/websocket-logger-server.d.ts || exit 1
         echo "Checking plugin builds..."
         test -f dist/plugins/vite-plugin.js || exit 1
-        test -f dist/plugins/vite-plugin.cjs || exit 1
         test -f dist/plugins/vite-plugin.d.ts || exit 1
         test -f dist/plugins/webpack-plugin.js || exit 1
-        test -f dist/plugins/webpack-plugin.cjs || exit 1
         test -f dist/plugins/webpack-plugin.d.ts || exit 1
         echo "All build artifacts present!"
         

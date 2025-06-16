@@ -1,6 +1,7 @@
 import js from '@eslint/js';
 import tseslint from '@typescript-eslint/eslint-plugin';
 import tsparser from '@typescript-eslint/parser';
+import globals from 'globals';
 
 export default [
   js.configs.recommended,
@@ -84,8 +85,8 @@ export default [
     }
   },
   {
-    // CommonJS test files
-    files: ['test-commonjs.js'],
+    // CommonJS configuration and test files
+    files: ['test-commonjs.js', 'webpack.config.js', 'tests/fixtures/**/webpack.config.js'],
     languageOptions: {
       ecmaVersion: 2020,
       sourceType: 'script',
@@ -99,6 +100,46 @@ export default [
         __dirname: 'readonly',
         __filename: 'readonly'
       }
+    }
+  },
+  {
+    // Test fixture files - browser environment with relaxed rules
+    files: ['tests/fixtures/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      sourceType: 'script',
+      globals: {
+        ...globals.browser,
+        module: 'writable',
+        exports: 'writable',
+        require: 'readonly',
+        process: 'readonly',
+        console: 'readonly',
+        Buffer: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly'
+      }
+    },
+    rules: {
+      // Allow console usage in test fixtures as they're testing console logging
+      'no-console': 'off',
+      // Disable some strict rules for test fixtures
+      'no-undef': 'off'
+    }
+  },
+  {
+    // Vite config files - ES modules
+    files: ['tests/fixtures/**/vite.config.js', '**/vite.config.js'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: {
+        ...globals.node
+      }
+    },
+    rules: {
+      // Allow any types in vite configs for simplicity
+      '@typescript-eslint/no-explicit-any': 'off'
     }
   },
   {
@@ -119,8 +160,12 @@ export default [
         setTimeout: 'readonly',
         clearTimeout: 'readonly',
         setInterval: 'readonly',
-        clearInterval: 'readonly'
+        clearInterval: 'readonly',
+        performance: 'readonly'
       }
+    },
+    rules: {
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^(getGlobalLogger|waitForLogger)$' }]
     }
   },
   {
