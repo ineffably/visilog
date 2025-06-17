@@ -97,7 +97,21 @@ if (process.env.NODE_ENV === 'development') {
 
 ### Start the Server
 
-For all methods, you need a Visilog server running:
+**Option 1: CLI Server (Recommended)**
+
+The simplest way to start the Visilog server:
+
+```bash
+# Start server with defaults (port 3001, ./logs directory)
+npx visilog-server
+
+# Or with custom options
+npx visilog-server --port 3002 --logs-dir ./my-logs
+```
+
+**Option 2: Manual Server Setup**
+
+If you need more control, create your own server:
 
 ```javascript
 // dev-logger.js
@@ -672,6 +686,132 @@ logs/
 ├── index.json                 # Session metadata
 └── sessions/                  # Per-session logs
     └── session-*.log          # JSON log entries
+```
+
+## 🔧 Common Setup Issues & Troubleshooting
+
+### ES6 Module Import Issues
+
+**Problem**: `Named export 'WebSocketLoggerServer' not found`
+
+**Solution**: Use the correct import pattern for your environment:
+
+```javascript
+// ✅ Correct ES6 import
+import { visilog } from 'visilog';
+const { WebSocketLoggerServer } = visilog;
+
+// ✅ Alternative: Direct module import
+import { WebSocketLoggerServer } from 'visilog/server';
+
+// ❌ This doesn't work with current exports
+import { WebSocketLoggerServer } from 'visilog';
+```
+
+**For Node.js ES modules with .js files:**
+```javascript
+// If you get module resolution errors, use:
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const { visilog } = require('visilog');
+const { WebSocketLoggerServer } = visilog;
+```
+
+### Environment Detection
+
+**Auto-import only works in development environments**. Visilog automatically detects:
+- `localhost`, `127.0.0.1`, or domains with `dev` in the name
+- Development build modes in bundlers
+- NODE_ENV set to 'development'
+
+**Force enable in production** (not recommended):
+```javascript
+import { WebSocketLogger } from 'visilog/client';
+const logger = new WebSocketLogger({ 
+  websocketUrl: 'ws://your-server:3001' 
+});
+logger.enableConsoleOverride();
+```
+
+### Server Connection Issues
+
+**Problem**: "Failed to connect to logging server"
+
+**Solutions**:
+1. **Use the CLI server (recommended)**:
+   ```bash
+   npx visilog-server
+   ```
+
+2. **Check port availability**:
+   ```bash
+   # Check if port 3001 is in use
+   npx visilog-server --port 3002
+   ```
+
+3. **Manual server with error handling**:
+   ```javascript
+   import { visilog } from 'visilog';
+   const { WebSocketLoggerServer } = visilog;
+   
+   const server = new WebSocketLoggerServer({ port: 3001 });
+   
+   server.start()
+     .then(() => console.log('✅ Server started'))
+     .catch(err => console.error('❌ Server failed:', err));
+   ```
+
+### Package.json Script Examples
+
+Add these to your package.json for common workflows:
+
+```json
+{
+  "scripts": {
+    "dev": "npx visilog-server & vite dev",
+    "dev:logs": "npx visilog-server --logs-dir ./debug-logs",
+    "clean:logs": "rm -rf logs"
+  }
+}
+```
+
+### Framework-Specific Issues
+
+**Next.js**: Import dynamically to avoid SSR issues:
+```javascript
+useEffect(() => {
+  if (typeof window !== 'undefined') {
+    import('visilog/auto');
+  }
+}, []);
+```
+
+**Vite**: No special configuration needed with auto-import:
+```javascript
+// main.js
+import 'visilog/auto';  // Works out of the box
+```
+
+**Webpack**: Works with any webpack version:
+```javascript
+// index.js
+import 'visilog/auto';  // No webpack config needed
+```
+
+### TypeScript Integration
+
+Visilog includes full TypeScript definitions:
+
+```typescript
+import { visilog, LoggerConfig, ServerConfig } from 'visilog';
+import type { LogMessage, SessionInfo } from 'visilog';
+
+const { WebSocketLoggerServer } = visilog;
+
+const config: ServerConfig = {
+  port: 3001,
+  logsDir: './logs'
+};
 ```
 
 ## Advanced: Build Tool Plugins

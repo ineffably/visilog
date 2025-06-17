@@ -60,6 +60,7 @@ jobs:
         npm run lint
         npm run build
         npm test
+        npm run test:examples
         
     - name: Validate build artifacts
       run: |

@@ -6,11 +6,35 @@
  */
 
 import { visilog } from '../dist/index.js';
-import { findAvailablePortSafe } from '../dist/library/port-detector.js';
 import { existsSync } from 'fs';
 import { join } from 'path';
+import { createServer } from 'net';
 
 const { WebSocketLoggerServer } = visilog;
+
+// Simple port detection for CLI
+async function findAvailablePortSafe(startPort = 3001) {
+  return new Promise((resolve) => {
+    const server = createServer();
+    
+    server.listen(startPort, (err) => {
+      if (err) {
+        server.close();
+        // Try next port
+        findAvailablePortSafe(startPort + 1).then(resolve);
+      } else {
+        const port = server.address().port;
+        server.close(() => {
+          resolve(port);
+        });
+      }
+    });
+    
+    server.on('error', () => {
+      findAvailablePortSafe(startPort + 1).then(resolve);
+    });
+  });
+}
 
 // Parse command line arguments
 function parseArgs() {

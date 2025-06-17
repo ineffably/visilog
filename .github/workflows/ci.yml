@@ -41,12 +41,15 @@ jobs:
     - name: Build project
       run: npm run build
       
-    - name: Run tests
+    - name: Run unit tests
       run: npm test
       
-    - name: Run tests with coverage
+    - name: Run unit tests with coverage
       run: npm run test:coverage
       continue-on-error: true  # Don't fail on coverage thresholds
+      
+    - name: Run framework examples validation
+      run: npm run test:examples
       
     - name: Extract Coverage Percentage
       if: matrix.node-version == '20.x'

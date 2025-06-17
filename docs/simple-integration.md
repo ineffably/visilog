@@ -83,11 +83,26 @@ if (process.env.NODE_ENV === 'development') {
 
 ## 🔧 Server Setup
 
-For all methods, you need a VisiLog server running. Create a simple script:
+**Option 1: CLI Server (Recommended)**
+
+The simplest way - no code needed:
+
+```bash
+# Start with defaults (port 3001, ./logs directory)
+npx visilog-server
+
+# Or with custom options
+npx visilog-server --port 3002 --logs-dir ./debug-logs
+```
+
+**Option 2: Manual Server Script**
+
+For custom control, create a script:
 
 ```javascript
 // dev-logger.js
-import { WebSocketLoggerServer } from 'visilog/server';
+import { visilog } from 'visilog';
+const { WebSocketLoggerServer } = visilog;
 
 const server = new WebSocketLoggerServer({
   port: 3001,
@@ -108,9 +123,10 @@ Add these to your package.json for easy development:
 ```json
 {
   "scripts": {
-    "dev": "concurrently \"npm run dev:app\" \"npm run dev:logger\"",
+    "dev": "concurrently \"npm run dev:app\" \"npx visilog-server\"",
     "dev:app": "your-normal-dev-command",
-    "dev:logger": "node dev-logger.js"
+    "dev:logs": "npx visilog-server --logs-dir ./debug-logs",
+    "clean:logs": "rm -rf logs"
   },
   "devDependencies": {
     "concurrently": "^7.0.0",

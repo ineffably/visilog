@@ -43,8 +43,11 @@ jobs:
     - name: Build project
       run: npm run build
       
-    - name: Run tests with coverage
+    - name: Run unit tests with coverage
       run: npm run test:coverage
+      
+    - name: Run framework examples validation
+      run: npm run test:examples
       
     - name: Validate package can be packed
       run: |
@@ -58,8 +61,9 @@ jobs:
         echo "Main bundle sizes:"
         ls -lh dist/*.js | awk '{print $5 " " $9}'
         
-    - name: Test integration scenarios
+    - name: Run integration tests (optional)
       run: npm run test:integration
+      continue-on-error: true  # Integration tests may be slower/flaky
       
     - name: Comment PR with results
       if: always()

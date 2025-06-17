@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visilog Vanilla JS Test</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+        }
+        button { 
+            margin: 5px; 
+            padding: 10px; 
+            cursor: pointer; 
+        }
+        .logs { 
+            max-height: 200px; 
+            overflow: auto; 
+            background: #f5f5f5; 
+            padding: 10px; 
+            margin: 10px 0; 
+        }
+    </style>
+</head>
+<body>
+    <h1>Visilog Vanilla JS Test App</h1>
+    
+    <div data-testid="test-content">
+        <p>Count: <span data-testid="count" id="count">0</span></p>
+        <button data-testid="increment-btn" onclick="incrementCount()">
+            Increment Count
+        </button>
+    </div>
+    
+    <div style="margin: 20px 0">
+        <h3>Test Logging</h3>
+        <button data-testid="log-info" onclick="addTestLog('info')">
+            Log Info
+        </button>
+        <button data-testid="log-warn" onclick="addTestLog('warn')">
+            Log Warning
+        </button>
+        <button data-testid="log-error" onclick="addTestLog('error')">
+            Log Error
+        </button>
+        <button data-testid="log-debug" onclick="addTestLog('debug')">
+            Log Debug
+        </button>
+    </div>
+
+    <div>
+        <h3>Generated Logs (<span id="log-count">0</span>)</h3>
+        <div data-testid="logs-display" class="logs" id="logs-display">
+            <!-- Logs will appear here -->
+        </div>
+    </div>
+
+    <!-- Load Visilog - in real tests this would be the built version -->
+    <script>
+        // Mock Visilog for testing - in integration tests we'll use the real build
+        window.VisiLog = {
+            connect: function(url) {
+                console.log('📡 VisiLog mock connected to:', url);
+                window.visilogConnected = true;
+            },
+            isDevEnvironment: function() {
+                return true;
+            }
+        };
+        
+        // Initialize
+        if (window.VisiLog && window.VisiLog.isDevEnvironment()) {
+            window.VisiLog.connect('ws://localhost:3001');
+        }
+    </script>
+    
+    <script>
+        let count = 0;
+        let logs = [];
+
+        // Log initialization
+        console.log('🎯 Vanilla JS test app initializing with Visilog', {
+            timestamp: new Date().toISOString(),
+            framework: 'vanilla-js'
+        });
+
+        function addTestLog(type) {
+            const timestamp = Date.now();
+            const logData = {
+                type,
+                count,
+                timestamp,
+                component: 'VanillaApp',
+                testData: { level: type, random: Math.random() }
+            };
+
+            switch (type) {
+                case 'info':
+                    console.log('ℹ️ Test info log from Vanilla JS', logData);
+                    break;
+                case 'warn':
+                    console.warn('⚠️ Test warning log from Vanilla JS', logData);
+                    break;
+                case 'error':
+                    console.error('❌ Test error log from Vanilla JS', logData);
+                    break;
+                case 'debug':
+                    console.debug('🔍 Test debug log from Vanilla JS', logData);
+                    break;
+            }
+
+            logs.push({ ...logData, id: Date.now() });
+            updateLogsDisplay();
+        }
+
+        function incrementCount() {
+            const oldCount = count;
+            count++;
+            document.getElementById('count').textContent = count;
+            
+            console.log('🖱️ Count incremented', {
+                oldCount,
+                newCount: count,
+                timestamp: Date.now()
+            });
+        }
+
+        function updateLogsDisplay() {
+            const display = document.getElementById('logs-display');
+            const countElement = document.getElementById('log-count');
+            
+            countElement.textContent = logs.length;
+            display.innerHTML = logs.map(log => 
+                `<div>[${log.type}] ${log.timestamp}</div>`
+            ).join('');
+        }
+
+        // Log page load
+        window.addEventListener('load', () => {
+            console.log('🎯 Vanilla JS test page loaded', {
+                timestamp: new Date().toISOString(),
+                visilogConnected: !!window.visilogConnected
+            });
+        });
+
+        // Log page unload
+        window.addEventListener('beforeunload', () => {
+            console.log('👋 Vanilla JS test page unloading', {
+                timestamp: new Date().toISOString()
+            });
+        });
+    </script>
+</body>
+</html>

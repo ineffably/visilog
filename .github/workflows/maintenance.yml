@@ -38,6 +38,7 @@ jobs:
         npm ci
         npm run build
         npm test
+        npm run test:examples
         
     - name: Create PR for dependency updates
       uses: peter-evans/create-pull-request@v5
