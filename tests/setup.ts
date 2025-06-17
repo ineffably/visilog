@@ -2,7 +2,7 @@
 import { TextEncoder, TextDecoder } from 'util';
 
 // Mock WebSocket for client tests
-const MockWebSocket: any = jest.fn().mockImplementation(() => ({
+const MockWebSocket: unknown = jest.fn().mockImplementation(() => ({
   readyState: 1, // OPEN
   send: jest.fn(),
   close: jest.fn(),
@@ -34,13 +34,13 @@ global.console = {
 };
 
 // Restore console for specific tests when needed
-(global as any).restoreConsole = () => {
+(global as { restoreConsole?: () => void }).restoreConsole = () => {
   global.console = originalConsole;
 };
 
 // Mock TextEncoder/TextDecoder for Node.js environment
 global.TextEncoder = TextEncoder;
-global.TextDecoder = TextDecoder as any;
+global.TextDecoder = TextDecoder as typeof global.TextDecoder;
 
 // Mock setTimeout/clearTimeout for timer tests
 jest.useFakeTimers();

@@ -10,7 +10,7 @@ export interface LogLevel {
 }
 
 export interface StructuredData {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface LogContext {
@@ -20,7 +20,7 @@ export interface LogContext {
   traceId?: string;
   component?: string;
   action?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface PerformanceMetrics {
@@ -70,13 +70,13 @@ export interface ConfigValidationRule {
   min?: number;
   max?: number;
   pattern?: RegExp;
-  allowedValues?: any[];
+  allowedValues?: unknown[];
 }
 
 export interface ValidationError {
   field: string;
   message: string;
-  value: any;
+  value: unknown;
   suggestion?: string;
 }
 
@@ -160,7 +160,7 @@ export interface ServerMessage {
   type: 'session-init' | 'ping' | 'pong' | 'error' | 'config-update' | 'health-check';
   sessionId?: string;
   message?: string;
-  data?: any;
+  data?: unknown;
   timestamp?: string;
   serverVersion?: string;
 }
@@ -168,7 +168,7 @@ export interface ServerMessage {
 export interface ClientMessage {
   type: 'log' | 'ping' | 'pong' | 'health-check' | 'config-request';
   log?: LogMessage;
-  data?: any;
+  data?: unknown;
   timestamp?: string;
   clientVersion?: string;
 }
@@ -185,7 +185,7 @@ export interface ErrorContext {
   sessionId?: string;
   timestamp: string;
   retryAttempt?: number;
-  additionalData?: any;
+  additionalData?: unknown;
 }
 
 export interface ConnectionDetails {

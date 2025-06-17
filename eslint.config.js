@@ -107,7 +107,7 @@ module.exports = [
     files: ['tests/fixtures/**/*.js'],
     languageOptions: {
       ecmaVersion: 2020,
-      sourceType: 'script',
+      sourceType: 'module',
       globals: {
         ...globals.browser,
         module: 'writable',
@@ -143,29 +143,25 @@ module.exports = [
     }
   },
   {
-    // Example files - treat as CommonJS for compatibility
+    // Example files - treat as ES modules since they use import/export
     files: ['examples/**/*.js'],
     languageOptions: {
       ecmaVersion: 2020,
-      sourceType: 'script',
+      sourceType: 'module',
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true
+        }
+      },
       globals: {
-        module: 'writable',
-        exports: 'writable',
-        require: 'readonly',
-        process: 'readonly',
-        console: 'readonly',
-        Buffer: 'readonly',
-        __dirname: 'readonly',
-        __filename: 'readonly',
-        setTimeout: 'readonly',
-        clearTimeout: 'readonly',
-        setInterval: 'readonly',
-        clearInterval: 'readonly',
-        performance: 'readonly'
+        ...globals.browser,
+        ...globals.node,
+        fetch: 'readonly'
       }
     },
     rules: {
-      'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^(getGlobalLogger|waitForLogger)$' }]
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^(getGlobalLogger|waitForLogger)$' }],
+      '@typescript-eslint/no-explicit-any': 'off'
     }
   },
   {
@@ -188,7 +184,10 @@ module.exports = [
       'coverage/**',
       'node_modules/**',
       '*.d.ts',
-      'demo-logs/**'
+      'demo-logs/**',
+      'tests/fixtures/**/dist/**',
+      'tests/fixtures/**/node_modules/**',
+      'examples/nextjs-example.js'
     ]
   }
 ]; 

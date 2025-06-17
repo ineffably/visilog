@@ -41,7 +41,7 @@ describe('Framework Examples Integration Tests', () => {
     // Clean up any existing test logs
     try {
       await fs.rm(TEST_CONFIG.server.logsDir, { recursive: true, force: true });
-    } catch (error) {
+    } catch {
       // Directory might not exist, that's ok
     }
 
@@ -67,7 +67,7 @@ describe('Framework Examples Integration Tests', () => {
     // Clean up test logs
     try {
       await fs.rm(TEST_CONFIG.server.logsDir, { recursive: true, force: true });
-    } catch (error) {
+    } catch {
       // Ignore cleanup errors
     }
   }, 15000);
@@ -298,7 +298,7 @@ async function runCommand(command: string, cwd: string): Promise<{
   });
 }
 
-async function startDevServer(command: string, cwd: string, port: number): Promise<ChildProcess> {
+async function startDevServer(command: string, cwd: string, _port: number): Promise<ChildProcess> {
   const [cmd, ...args] = command.split(' ');
   const proc = spawn(cmd, args, { cwd, shell: true });
   
@@ -319,7 +319,7 @@ async function waitForPort(port: number, timeout: number): Promise<void> {
       if (response.ok) {
         return;
       }
-    } catch (error) {
+    } catch {
       // Port not ready yet
     }
     

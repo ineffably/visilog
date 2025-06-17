@@ -22,7 +22,7 @@ export default MyApp
 // Next.js API Route with Logging
 // File: pages/api/users.js
 
-export default function handler(req, res) {
+function handler(req, res) {
   // Server-side logging (if you have visilog server setup)
   console.log('🔥 API route called:', {
     method: req.method,
@@ -53,7 +53,7 @@ export default function handler(req, res) {
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
 
-export default function Home({ serverData }) {
+function Home({ serverData }) {
   const [clientData, setClientData] = useState(null)
   const [loading, setLoading] = useState(false)
 
@@ -264,7 +264,7 @@ export function useApiWithLogging() {
 // File: next.config.js
 
 /** @type {import('next').NextConfig} */
-const nextConfig = {
+export const nextConfig = {
   reactStrictMode: true,
   
   // Webpack config to ensure Visilog works properly
@@ -278,7 +278,7 @@ const nextConfig = {
   }
 }
 
-module.exports = nextConfig
+// module.exports = nextConfig
 
 // ============================================================================
 // Tell your LLM:

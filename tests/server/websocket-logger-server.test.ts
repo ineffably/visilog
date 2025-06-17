@@ -301,7 +301,7 @@ describe('WebSocketLoggerServer', () => {
       
       // Trigger an error by calling handleError method indirectly
       const error = new Error('Test error');
-      (server as any).handleError(error, 'Test context');
+      (server as unknown as { handleError: (error: Error, context: string) => void }).handleError(error, 'Test context');
       
       expect(errorHandler).toHaveBeenCalledWith(error, expect.objectContaining({
         operation: 'Test context',
@@ -315,12 +315,12 @@ describe('WebSocketLoggerServer', () => {
       const unsubscribe = server.onError(errorHandler);
       
       // Trigger error
-      (server as any).handleError(new Error('Test'), 'Test');
+      (server as unknown as { handleError: (error: Error, context: string) => void }).handleError(new Error('Test'), 'Test');
       expect(errorHandler).toHaveBeenCalledTimes(1);
       
       // Unsubscribe and trigger again
       unsubscribe();
-      (server as any).handleError(new Error('Test'), 'Test');
+      (server as unknown as { handleError: (error: Error, context: string) => void }).handleError(new Error('Test'), 'Test');
       expect(errorHandler).toHaveBeenCalledTimes(1); // Should not be called again
     });
   });
