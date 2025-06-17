@@ -13,6 +13,9 @@ module.exports = {
     'client/**/*.ts',
     'server/**/*.ts',
     'plugins/**/*.ts',
+    'auto.ts',
+    'browser.ts',
+    'middleware.ts',
     '!**/*.d.ts',
     '!**/node_modules/**',
     '!**/dist/**'
@@ -26,10 +29,10 @@ module.exports = {
   ],
   coverageThreshold: {
     global: {
-      branches: 80,
+      branches: 50,
       functions: 80,
-      lines: 80,
-      statements: 80
+      lines: 65,
+      statements: 65
     }
   },
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],

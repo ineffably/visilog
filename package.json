@@ -36,8 +36,12 @@
       "require": "./dist/server/websocket-logger-server.js"
     }
   },
+  "bin": {
+    "visilog-server": "./bin/visilog-server.js"
+  },
   "files": [
     "dist",
+    "bin",
     "README.md",
     "LICENSE"
   ],

@@ -169,6 +169,20 @@ module.exports = [
     }
   },
   {
+    // CLI binary files - Node.js environment with ES modules
+    files: ['bin/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      sourceType: 'module',
+      globals: {
+        ...globals.node
+      }
+    },
+    rules: {
+      'no-console': 'off'
+    }
+  },
+  {
     ignores: [
       'dist/**',
       'coverage/**',
