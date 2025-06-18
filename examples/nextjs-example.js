@@ -7,9 +7,18 @@ function MyApp({ Component, pageProps }) {
   useEffect(() => {
     // Client-side only import to avoid SSR issues
     if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-      import('visilog/auto').then(() => {
+      // Use actual import path for current structure
+      import('../dist/client/websocket-logger').then((mod) => {
+        const { WebSocketLogger } = mod['visilog-client'];
+        const logger = new WebSocketLogger({
+          autoConnect: true,
+          websocketUrl: 'ws://localhost:3001'
+        });
+        logger.enableConsoleOverride();
         console.log('🎯 Visilog initialized in Next.js app')
-      })
+      }).catch(() => {
+        console.log('Visilog not available, using console only');
+      });
     }
   }, [])
 

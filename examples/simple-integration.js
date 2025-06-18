@@ -2,7 +2,9 @@
 
 // Option 1: Conditional import for dev only
 if (process.env.NODE_ENV === 'development') {
-  import('visilog/client').then(({ WebSocketLogger }) => {
+  // Use actual import path for built distribution
+  import('../dist/client/websocket-logger').then((mod) => {
+    const { WebSocketLogger } = mod['visilog-client'];
     const logger = new WebSocketLogger({
       autoConnect: true,
       websocketUrl: 'ws://localhost:3001'
@@ -12,6 +14,9 @@ if (process.env.NODE_ENV === 'development') {
     logger.enableConsoleOverride();
     
     console.log('🔌 VisiLog connected for development');
+  }).catch(() => {
+    // Fallback if visilog not available
+    console.log('VisiLog not available, using console only');
   });
 }
 

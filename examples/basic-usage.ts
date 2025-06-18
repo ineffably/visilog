@@ -3,7 +3,7 @@
 // ========================================
 // Server Setup (Node.js)
 // ========================================
-import { WebSocketLoggerServer } from '../server/websocket-logger-server'
+const { WebSocketLoggerServer } = require('../dist/server/websocket-logger-server')['visilog-server'];
 import type { SessionInfo, LogMessage, ErrorContext } from '../types'
 
 async function startLoggingServer() {
@@ -15,7 +15,11 @@ async function startLoggingServer() {
     cleanupThreshold: 75,
     cleanupAmount: 25,
     enableIndex: true,
-    enableSessionLogs: true
+    enableSessionLogs: true,
+    // New chunking features
+    enableChunking: true,
+    maxLogFileSize: 50 * 1024, // 50KB chunks for LLM-friendly sizes
+    maxChunksPerSession: 20
   })
 
   // Listen for new sessions
@@ -49,7 +53,7 @@ async function startLoggingServer() {
 // ========================================
 // Client Setup (Browser)
 // ========================================
-import { WebSocketLogger } from '../client/websocket-logger'
+const { WebSocketLogger } = require('../dist/client/websocket-logger')['visilog-client'];
 
 function setupClientLogger() {
   const logger = new WebSocketLogger({
