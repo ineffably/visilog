@@ -105,6 +105,10 @@ export interface ServerConfig {
   rateLimitMax?: number;
   enableHealthCheck?: boolean;
   healthCheckPath?: string;
+  maxLogFileSize?: number; // Maximum size per log file chunk in bytes (default: 50KB)
+  enableChunking?: boolean; // Enable automatic log file chunking
+  chunkRotationStrategy?: 'size' | 'time' | 'both'; // When to rotate chunks
+  maxChunksPerSession?: number; // Maximum number of chunks per session
 }
 
 export interface PluginConfig {
@@ -130,6 +134,18 @@ export interface SessionInfo {
     averageMessageSize: number;
     peakMemoryUsage?: number;
   };
+  currentChunk?: number; // Current chunk index (0-based)
+  totalChunks?: number; // Total number of chunks created
+  currentChunkSize?: number; // Size of current chunk in bytes
+}
+
+export interface SessionChunkInfo {
+  chunkIndex: number; // 0-based chunk index
+  filePath: string; // Relative path to chunk file
+  size: number; // Size in bytes
+  messageCount: number; // Number of messages in this chunk
+  startTime: string; // When this chunk was started
+  endTime?: string; // When this chunk was completed (if applicable)
 }
 
 export interface SessionIndexEntry {
@@ -142,6 +158,9 @@ export interface SessionIndexEntry {
   logFile: string;
   status: 'active' | 'completed' | 'error';
   context?: LogContext;
+  chunks?: SessionChunkInfo[]; // Information about all chunks for this session
+  totalChunks?: number; // Total number of chunks
+  totalSize?: number; // Total size of all chunks in bytes
 }
 
 export interface SessionIndex {

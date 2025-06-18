@@ -7,7 +7,7 @@ on:
     branches: [ main, develop ]
 
 permissions:
-  contents: write
+  contents: write  # Needed for coverage badge updates
 
 jobs:
   test:

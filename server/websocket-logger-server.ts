@@ -10,6 +10,7 @@ import type {
   ClientMessage,
   SessionIndex,
   SessionIndexEntry,
+  SessionChunkInfo,
   SessionHandler,
   LogHandler,
   ErrorHandler
@@ -18,6 +19,8 @@ import type {
 interface Session extends SessionInfo {
   ws: WebSocket;
   logFile: string;
+  chunks: SessionChunkInfo[];
+  currentChunkPath: string;
 }
 
 export class WebSocketLoggerServer {
@@ -38,7 +41,11 @@ export class WebSocketLoggerServer {
     logsDir: path.join(process.cwd(), 'logs'),
     enableIndex: true,
     enableSessionLogs: true,
-    cleanupInterval: 30 * 60 * 1000 // 30 minutes
+    cleanupInterval: 30 * 60 * 1000, // 30 minutes
+    maxLogFileSize: 50 * 1024, // 50KB - LLM-friendly size
+    enableChunking: true,
+    chunkRotationStrategy: 'size',
+    maxChunksPerSession: 20
   };
 
   private indexFile: string;
@@ -130,21 +137,37 @@ export class WebSocketLoggerServer {
     this.wss.on('connection', (ws, request) => {
       const sessionId = this.generateSessionId();
       const sessionLogFile = this.config.enableSessionLogs 
-        ? path.join(this.config.logsDir, 'sessions', `session-${sessionId}.log`)
+        ? path.join(this.config.logsDir, 'sessions', this.generateTimestampedFilename(sessionId))
         : '';
       
       const sessionInfo: SessionInfo = {
         id: sessionId,
         startTime: new Date(),
         lastActivity: new Date(),
-        messageCount: 0
+        messageCount: 0,
+        currentChunk: 0,
+        totalChunks: 1,
+        currentChunkSize: 0
       };
 
       const session: Session = {
         ...sessionInfo,
         ws,
-        logFile: sessionLogFile
+        logFile: sessionLogFile,
+        chunks: [],
+        currentChunkPath: sessionLogFile
       };
+      
+      // Initialize first chunk info
+      if (this.config.enableChunking && sessionLogFile) {
+        session.chunks.push({
+          chunkIndex: 0,
+          filePath: path.relative(this.config.logsDir, sessionLogFile),
+          size: 0,
+          messageCount: 0,
+          startTime: new Date().toISOString()
+        });
+      }
       
       this.sessions.set(sessionId, session);
       
@@ -158,7 +181,8 @@ export class WebSocketLoggerServer {
       }
       
       if (this.config.enableSessionLogs && sessionLogFile) {
-        this.logToFile(sessionLogFile, startMessage);
+        const startMessageSize = Buffer.byteLength(startMessage + '\n', 'utf8');
+        this.logToFile(sessionLogFile, startMessage, session, startMessageSize);
       }
       
       console.log(`📱 New session: ${sessionId} (${this.sessions.size} active)`);
@@ -240,6 +264,63 @@ export class WebSocketLoggerServer {
     return Math.random().toString(36).substring(2, 10);
   }
 
+  private generateTimestampedFilename(sessionId: string, chunkIndex: number = 0): string {
+    const now = new Date();
+    const datePart = now.toISOString().slice(0, 10); // YYYY-MM-DD
+    const timePart = now.toISOString().slice(11, 19).replace(/:/g, '-'); // HH-MM-SS
+    const msPart = now.getMilliseconds().toString().padStart(3, '0');
+    
+    if (chunkIndex === 0) {
+      return `session-${datePart}_${timePart}.${msPart}_${sessionId}.log`;
+    } else {
+      return `session-${datePart}_${timePart}.${msPart}_${sessionId}-chunk-${chunkIndex.toString().padStart(3, '0')}.log`;
+    }
+  }
+
+  private shouldRotateChunk(session: Session, messageSize: number): boolean {
+    if (!this.config.enableChunking || !this.config.maxLogFileSize) return false;
+    
+    const currentSize = (session.currentChunkSize || 0) + messageSize;
+    return currentSize > this.config.maxLogFileSize;
+  }
+
+  private rotateChunk(session: Session): void {
+    if (!this.config.enableChunking) return;
+    
+    // Complete current chunk
+    const currentChunk = session.chunks[session.chunks.length - 1];
+    if (currentChunk && !currentChunk.endTime) {
+      currentChunk.endTime = new Date().toISOString();
+    }
+    
+    // Check chunk limit
+    if (session.totalChunks && session.totalChunks >= (this.config.maxChunksPerSession || 20)) {
+      console.warn(`⚠️ Session ${session.id} reached maximum chunk limit (${this.config.maxChunksPerSession}). Stopping chunking.`);
+      return;
+    }
+    
+    // Create new chunk
+    const newChunkIndex = (session.currentChunk || 0) + 1;
+    const newChunkFilename = this.generateTimestampedFilename(session.id, newChunkIndex);
+    const newChunkPath = path.join(this.config.logsDir, 'sessions', newChunkFilename);
+    
+    session.currentChunk = newChunkIndex;
+    session.totalChunks = (session.totalChunks || 1) + 1;
+    session.currentChunkSize = 0;
+    session.currentChunkPath = newChunkPath;
+    
+    // Add new chunk info
+    session.chunks.push({
+      chunkIndex: newChunkIndex,
+      filePath: path.relative(this.config.logsDir, newChunkPath),
+      size: 0,
+      messageCount: 0,
+      startTime: new Date().toISOString()
+    });
+    
+    console.log(`📦 Created new chunk for session ${session.id}: ${newChunkFilename}`);
+  }
+
   private handleLogMessage(sessionId: string, logMessage: LogMessage): void {
     const session = this.sessions.get(sessionId);
     if (!session) return;
@@ -250,10 +331,16 @@ export class WebSocketLoggerServer {
     // Format log entry
     const timestamp = new Date().toISOString();
     const formattedMessage = this.formatLogMessage(logMessage, timestamp);
+    const messageSize = Buffer.byteLength(formattedMessage + '\n', 'utf8');
     
-    // Write to session log
-    if (this.config.enableSessionLogs && session.logFile) {
-      this.logToFile(session.logFile, formattedMessage);
+    // Check if we need to rotate chunk
+    if (this.config.enableChunking && this.shouldRotateChunk(session, messageSize)) {
+      this.rotateChunk(session);
+    }
+    
+    // Write to session log (current chunk)
+    if (this.config.enableSessionLogs && session.currentChunkPath) {
+      this.logToFile(session.currentChunkPath, formattedMessage, session, messageSize);
     }
     
     // Update session index
@@ -323,10 +410,22 @@ export class WebSocketLoggerServer {
     }
   }
 
-  private logToFile(filePath: string, message: string): void {
+  private logToFile(filePath: string, message: string, session?: Session, messageSize?: number): void {
     try {
       const logEntry = `${message}\n`;
       fs.appendFileSync(filePath, logEntry);
+      
+      // Update session chunk information if provided
+      if (session && messageSize !== undefined) {
+        session.currentChunkSize = (session.currentChunkSize || 0) + messageSize;
+        
+        // Update current chunk info
+        const currentChunk = session.chunks[session.chunks.length - 1];
+        if (currentChunk) {
+          currentChunk.size = session.currentChunkSize;
+          currentChunk.messageCount++;
+        }
+      }
     } catch (error) {
       this.handleError(error as Error, `Failed to write to log file: ${filePath}`);
     }
@@ -388,6 +487,9 @@ export class WebSocketLoggerServer {
       if (existingEntry) {
         existingEntry.messageCount = session.messageCount;
         existingEntry.status = 'active';
+        existingEntry.totalChunks = session.totalChunks;
+        existingEntry.chunks = session.chunks.slice(); // Create a copy
+        existingEntry.totalSize = session.chunks.reduce((total, chunk) => total + chunk.size, 0);
       } else {
         const newEntry: SessionIndexEntry = {
           id: session.id,
@@ -395,7 +497,10 @@ export class WebSocketLoggerServer {
           messageCount: session.messageCount,
           namespace: session.namespace,
           logFile: path.relative(this.config.logsDir, session.logFile),
-          status: 'active'
+          status: 'active',
+          chunks: session.chunks.slice(), // Create a copy
+          totalChunks: session.totalChunks,
+          totalSize: session.chunks.reduce((total, chunk) => total + chunk.size, 0)
         };
         index.sessions.push(newEntry);
         index.totalSessions = Math.max(index.totalSessions, index.sessions.length);
@@ -410,6 +515,7 @@ export class WebSocketLoggerServer {
     
     const index = this.readIndex();
     const sessionEntry = index.sessions.find(entry => entry.id === sessionId);
+    const session = this.sessions.get(sessionId);
     
     if (sessionEntry) {
       sessionEntry.status = status;
@@ -418,6 +524,13 @@ export class WebSocketLoggerServer {
       }
       if (duration) {
         sessionEntry.duration = duration;
+      }
+      
+      // Update final chunk information
+      if (session) {
+        sessionEntry.chunks = session.chunks.slice(); // Create a copy
+        sessionEntry.totalChunks = session.totalChunks;
+        sessionEntry.totalSize = session.chunks.reduce((total, chunk) => total + chunk.size, 0);
       }
       
       // Update active sessions count
@@ -439,8 +552,15 @@ export class WebSocketLoggerServer {
       this.updateSessionInIndex(sessionId, 'completed', new Date(), Math.round(duration / 1000));
     }
     
-    if (this.config.enableSessionLogs && session.logFile) {
-      this.logToFile(session.logFile, endMessage);
+    if (this.config.enableSessionLogs && session.currentChunkPath) {
+      const endMessageSize = Buffer.byteLength(endMessage + '\n', 'utf8');
+      this.logToFile(session.currentChunkPath, endMessage, session, endMessageSize);
+      
+      // Complete the final chunk
+      const currentChunk = session.chunks[session.chunks.length - 1];
+      if (currentChunk && !currentChunk.endTime) {
+        currentChunk.endTime = new Date().toISOString();
+      }
     }
     
     console.log(`👋 Session ended: ${sessionId} (${session.messageCount} messages, ${Math.round(duration / 1000)}s)`);
@@ -571,7 +691,10 @@ export class WebSocketLoggerServer {
       startTime: session.startTime,
       lastActivity: session.lastActivity,
       messageCount: session.messageCount,
-      namespace: session.namespace
+      namespace: session.namespace,
+      currentChunk: session.currentChunk,
+      totalChunks: session.totalChunks,
+      currentChunkSize: session.currentChunkSize
     }));
   }
 
@@ -584,7 +707,10 @@ export class WebSocketLoggerServer {
       startTime: session.startTime,
       lastActivity: session.lastActivity,
       messageCount: session.messageCount,
-      namespace: session.namespace
+      namespace: session.namespace,
+      currentChunk: session.currentChunk,
+      totalChunks: session.totalChunks,
+      currentChunkSize: session.currentChunkSize
     };
   }
 

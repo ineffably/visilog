@@ -3,65 +3,47 @@
  * Demonstrates Phase 1 & 2 improvements that exceed feedback expectations
  */
 
-// Import the enhanced factory and utilities
-const { visilog } = require('../dist/index.js');
-const { 
-  createLogger, 
-  getGlobalLogger, 
-  waitForLogger, 
-  registry,
-  ConfigValidator,
-  EnvironmentDetector 
-} = visilog;
+// Import the basic logger components (current actual exports)
+const WebSocketLoggerServerModule = require('../dist/server/websocket-logger-server');
+const WebSocketLoggerServer = WebSocketLoggerServerModule['visilog-server'].WebSocketLoggerServer;
+
+const WebSocketLoggerModule = require('../dist/client/websocket-logger');
+const WebSocketLogger = WebSocketLoggerModule['visilog-client'].WebSocketLogger;
 
 async function demonstrateEnhancements() {
-  console.log('🚀 Visilog Enhanced Features Demo\n');
+  console.log('🚀 Visilog Core Features Demo\n');
 
-  // 1. Environment Detection (exceeds feedback expectations)
-  console.log('📍 Environment Detection:');
-  const env = EnvironmentDetector.detect();
-  console.log(`   ${EnvironmentDetector.getDescription(env)}`);
-  console.log(`   Details:`, env);
-  console.log();
-
-  // 2. Configuration Validation (exceeds feedback expectations)
-  console.log('🔧 Configuration Validation:');
-  const invalidConfig = {
-    websocketUrl: 'http://localhost:3001', // Wrong protocol
-    maxRetries: '5', // Wrong type
-    minLevel: 10, // Invalid range
-    enableWebSocket: 'yes' // Wrong type
-  };
-
-  const validation = ConfigValidator.validate(invalidConfig);
-  console.log('   Validation errors:');
-  validation.errors.forEach(error => {
-    console.log(`   ❌ ${error.field}: ${error.message}`);
-    console.log(`      💡 Suggestion: ${error.suggestion}`);
+  // 1. Start WebSocket Server with chunking
+  console.log('🔌 Starting WebSocket Server with Chunking:');
+  const server = new WebSocketLoggerServer({
+    port: 3001,
+    enableChunking: true,
+    maxLogFileSize: 50 * 1024, // 50KB chunks for LLM-friendly sizes
+    maxChunksPerSession: 20,
+    logsDir: './demo-logs'
   });
 
-  const { config: fixedConfig } = ConfigValidator.validateAndFix(invalidConfig);
-  console.log('   ✅ Auto-fixed configuration:', fixedConfig);
+  await server.start();
+  console.log('   ✅ Server started with chunking enabled');
   console.log();
 
-  // 3. Smart Logger Factory (exceeds feedback expectations)
-  console.log('🏭 Smart Logger Factory:');
-  
-  // Create logger with intelligent auto-configuration
-  const logger = createLogger({
-    name: 'demo-app',
-    namespace: 'enhanced-demo',
-    autoStart: true,
-    waitForConnection: false, // Don't wait for demo
-    enableAutoRecovery: true,
-    fallbackMode: 'console'
+  // 2. Create WebSocket Logger Client  
+  console.log('📱 Creating WebSocket Logger Client:');
+  const logger = new WebSocketLogger({
+    websocketUrl: 'ws://localhost:3001',
+    enableWebSocket: true,
+    enableConsole: true,
+    autoConnect: true,
+    namespace: 'demo-app'
   });
 
-  console.log('   ✅ Logger created with smart defaults');
-  console.log(`   📊 Status: ${logger.getStatus()}`);
+  // Wait for connection
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  console.log('   ✅ Client connected');
+  console.log(`   📊 Status: ${logger.getConnectionStatus()}`);
   console.log();
 
-  // 4. Structured Logging with TypeScript-like benefits
+  // 3. Structured Logging
   console.log('📝 Structured Logging:');
   
   logger.info('User authentication', {
@@ -83,156 +65,101 @@ async function demonstrateEnhancements() {
   console.log('   ✅ Structured logs sent');
   console.log();
 
-  // 5. Categorized Logging (exceeds feedback expectations)
-  console.log('🏷️  Categorized Logging:');
+  // 4. Console Override Logging
+  console.log('🖥️  Console Override Logging:');
   
-  const authLogger = logger.category('authentication');
-  const dbLogger = logger.category('database');
-  const apiLogger = logger.category('api');
+  // Enable console override to capture all console.* calls
+  logger.enableConsoleOverride();
 
-  authLogger.info('Login successful', { userId: 12345 });
-  dbLogger.warn('Slow query detected', { duration: 1500, query: 'SELECT * FROM users...' });
-  apiLogger.error('External service timeout', { service: 'payment-gateway', timeout: 5000 });
+  // These will be captured automatically
+  console.log('This log will be captured by visilog');
+  console.error('This error will be captured too', { errorCode: 500 });
+  console.warn('Performance warning', { loadTime: 2500 });
 
-  console.log('   ✅ Category-specific logs sent');
+  console.log('   ✅ Console override logs captured');
   console.log();
 
-  // 6. Contextual Logging (exceeds feedback expectations)
-  console.log('🎯 Contextual Logging:');
+  // 5. Session and Chunk Information
+  console.log('📊 Session Information:');
   
-  const userLogger = logger.withContext({
-    userId: 12345,
-    sessionId: 'sess_abc123',
-    requestId: 'req_xyz789'
-  });
-
-  userLogger.info('Page viewed', { page: '/dashboard', loadTime: 250 });
-  userLogger.debug('Feature flag checked', { flag: 'new-ui', enabled: true });
-
-  console.log('   ✅ Context automatically added to all logs');
+  // Wait a bit for logs to process
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  const sessionId = logger.getSessionId();
+  const sessions = server.getSessions();
+  
+  console.log(`   🆔 Current Session ID: ${sessionId}`);
+  console.log(`   📈 Active Sessions: ${sessions.length}`);
+  
+  if (sessions.length > 0) {
+    const session = sessions[0];
+    console.log(`   📦 Current Chunk: ${session.currentChunk}`);
+    console.log(`   📦 Total Chunks: ${session.totalChunks}`);
+    console.log(`   📏 Current Chunk Size: ${session.currentChunkSize} bytes`);
+  }
+  
   console.log();
 
-  // 7. Performance Tracking (exceeds feedback expectations)
-  console.log('⏱️  Performance Tracking:');
+  // 6. Generate Large Log to Test Chunking
+  console.log('📦 Testing Chunking Feature:');
   
-  const timer = logger.startTimer('data-processing');
-  
-  // Simulate some work
-  await new Promise(resolve => setTimeout(resolve, 100));
-  timer.lap('validation-complete', { recordsProcessed: 1000 });
-  
-  await new Promise(resolve => setTimeout(resolve, 50));
-  timer.lap('transformation-complete', { recordsTransformed: 1000 });
-  
-  await new Promise(resolve => setTimeout(resolve, 75));
-  timer.end({ totalRecords: 1000, errors: 0, successRate: 100 });
-
-  console.log('   ✅ Performance timing completed');
-  console.log();
-
-  // 8. Global Registry (exceeds feedback expectations)
-  console.log('🌐 Global Registry:');
-  
-  // Create additional named loggers
-  registry.create({ 
-    name: 'user-service', 
-    namespace: 'microservices' 
-  });
-  
-  registry.create({ 
-    name: 'analytics', 
-    namespace: 'tracking' 
-  });
-
-  console.log(`   📋 Registered loggers: ${registry.list().join(', ')}`);
-  
-  // Access from anywhere
-  const userService = registry.get('user-service');
-  userService.info('Service started', { port: 3000, version: '1.2.3' });
-
-  console.log('   ✅ Global registry working');
-  console.log();
-
-  // 9. Error Handling & Recovery (exceeds feedback expectations)
-  console.log('🛡️  Error Handling:');
-  
-  logger.onError((error, context) => {
-    console.log(`   🚨 Error handled: ${error.message}`);
-    if (context) {
-      console.log(`   📍 Context: ${context.operation || 'unknown'}`);
-    }
-  });
-
-  logger.onConnection((status, details) => {
-    console.log(`   🔌 Connection status: ${status}`);
-    if (details?.lastError) {
-      console.log(`   ❌ Last error: ${details.lastError}`);
-    }
-  });
-
-  console.log('   ✅ Error handlers registered');
-  console.log();
-
-  // 10. Configuration Validation in Action
-  console.log('⚙️  Runtime Configuration:');
-  
-  const currentValidation = logger.validateConfig();
-  if (currentValidation.isValid) {
-    console.log('   ✅ Current configuration is valid');
-  } else {
-    console.log('   ❌ Configuration issues found:');
-    currentValidation.errors.forEach(error => {
-      console.log(`      - ${error.message}`);
+  // Generate logs to trigger chunking
+  for (let i = 0; i < 50; i++) {
+    logger.info(`Large log entry ${i + 1}`, {
+      index: i,
+      data: 'A'.repeat(200), // Large string to fill chunk faster
+      timestamp: Date.now(),
+      user: { id: i % 5, name: `User${i % 5}` },
+      metadata: {
+        requestId: `req_${i}`,
+        sessionData: { theme: 'dark', lang: 'en' }
+      }
     });
   }
-
-  if (currentValidation.warnings.length > 0) {
-    console.log('   ⚠️  Configuration warnings:');
-    currentValidation.warnings.forEach(warning => {
-      console.log(`      - ${warning.message}`);
-    });
+  
+  // Wait for processing
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  const updatedSessions = server.getSessions();
+  if (updatedSessions.length > 0) {
+    const session = updatedSessions[0];
+    console.log(`   ✅ Chunking results:`);
+    console.log(`   📦 Final Chunks Created: ${session.totalChunks}`);
+    console.log(`   📏 Current Chunk Size: ${session.currentChunkSize} bytes`);
+    console.log(`   📝 Total Messages: ${session.messageCount}`);
   }
-
+  
   console.log();
 
-  // 11. Demonstrate Fallback Behavior
-  console.log('🔄 Fallback Behavior:');
+  // 7. Configuration and Status
+  console.log('⚙️  Configuration and Status:');
   
-  const fallbackLogger = createLogger({
-    name: 'fallback-demo',
-    websocketUrl: 'ws://nonexistent:9999', // This will fail
-    maxRetries: 1,
-    retryInterval: 100,
-    fallbackMode: 'console',
-    customFallback: (logMessage) => {
-      console.log(`   🔄 Custom fallback: [${logMessage.level.toUpperCase()}] ${logMessage.message}`);
-    }
-  });
-
-  // This will use fallback since WebSocket will fail
-  fallbackLogger.info('This message uses fallback', { demo: true });
+  console.log(`   🔌 Connection Status: ${logger.getConnectionStatus()}`);
+  console.log(`   📋 Queue Size: ${logger.getQueueSize()}`);
+  console.log(`   🔗 Is Connected: ${logger.isConnected()}`);
   
-  console.log('   ✅ Fallback system working');
+  const serverStats = server.getStats();
+  console.log(`   🖥️  Server Active Sessions: ${serverStats.activeSessions}`);
+  console.log(`   📁 Logs Directory: ${serverStats.logsDirectory}`);
+  
   console.log();
 
   // Summary
   console.log('🎉 Demo Complete!');
-  console.log('\n📊 Summary of Enhanced Features:');
-  console.log('   ✅ Environment Detection & Smart Defaults');
-  console.log('   ✅ Configuration Validation & Auto-Fix');
-  console.log('   ✅ Logger Factory with Auto-Configuration');
-  console.log('   ✅ Structured Logging with Type Safety');
-  console.log('   ✅ Categorized & Contextual Logging');
-  console.log('   ✅ Built-in Performance Tracking');
-  console.log('   ✅ Global Registry Management');
-  console.log('   ✅ Enhanced Error Handling & Recovery');
-  console.log('   ✅ Graceful Fallback Systems');
-  console.log('   ✅ Runtime Configuration Validation');
-  console.log('\n🚀 Visilog now exceeds all feedback expectations!');
+  console.log('\n📊 Summary of Core Features Demonstrated:');
+  console.log('   ✅ WebSocket Server with Chunking');
+  console.log('   ✅ WebSocket Client with Auto-Connect');
+  console.log('   ✅ Structured Logging with Complex Objects');
+  console.log('   ✅ Console Override for Automatic Capture');
+  console.log('   ✅ Session Management with Timestamped Files');
+  console.log('   ✅ Intelligent Log Chunking (50KB LLM-friendly)');
+  console.log('   ✅ Real-time Session Monitoring');
+  console.log('   ✅ Configuration Management');
+  console.log('\n🚀 Visilog: Ready for LLM-assisted debugging!');
 
   // Cleanup
-  setTimeout(() => {
-    registry.clear();
+  setTimeout(async () => {
+    await server.stop();
     process.exit(0);
   }, 1000);
 }
